@@ -1,8 +1,7 @@
-import {ok, serverError, forbidden} from 'wix-http-functions';
+import {forbidden, ok, serverError} from 'wix-http-functions';
 import wixData from 'wix-data';
 import crypto from 'crypto';
 import PromiseQueue from 'promise-queue';
-import {mediaManager} from 'wix-media-backend';
 import wixSecretsBackend from 'wix-secrets-backend';
 
 // URL to call this HTTP function from your published site looks like:
@@ -73,6 +72,20 @@ export async function post_isAlive(request) {
       return 'ok';
     else
       throw new Error('protocol error - the isAlive API expects isAlive member in the data payload');
+  })
+}
+
+export async function post_insertItemBatch(request) {
+  return await logRequest('insertItemBatch', async () => {
+    let data = await validateAndParseRequest(request)
+    let itemsToInsert = data.items;
+    let collection = data.collection;
+    try {
+      return await wixData.bulkInsert(collection, itemsToInsert, {suppressAuth: true});
+    }
+    catch (e) {
+      return ok({body: e.stack});
+    }
   })
 }
 
