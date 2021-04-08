@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import fs from 'fs';
+import {createWriteStream} from 'fs';
 import PromiseWritable from 'promise-writable';
 import {inspect} from 'util';
 
@@ -25,7 +25,7 @@ function formatTime(timeMillis) {
 
 let auditWriteStream;
 function openAuditLog(filename) {
-  const stream = fs.createWriteStream(filename);
+  const stream = createWriteStream(filename);
   auditWriteStream = new PromiseWritable(stream);
 }
 
