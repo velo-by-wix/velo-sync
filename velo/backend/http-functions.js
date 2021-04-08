@@ -34,7 +34,7 @@ async function validateAndParseRequest(request) {
   const payloadJson = JSON.parse(payload, dateReviver);
   const secret = await wixSecretsBackend.getSecret("velo-sync")
   const hmac = crypto.createHmac('sha256', secret);
-  hmac.update(JSON.stringify(payloadJson.data, dateReplacer))
+  hmac.update(JSON.stringify(payloadJson.data, dateReplacer));
   const digest = hmac.digest('hex');
   if (digest !== payloadJson.signature) {
     let forbiddenError = new Error('invalid signature check')
