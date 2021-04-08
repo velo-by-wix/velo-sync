@@ -1,6 +1,6 @@
 import optimist from 'optimist';
-import init from './init';
-import isAliveTask from "./is-alive-task";
+import initTask from './tasks/init-task';
+import isAliveTask from "./tasks/is-alive-task";
 
 if (process.argv.length < 3) {
   printUsage();
@@ -9,8 +9,8 @@ if (process.argv.length < 3) {
 
 let command = process.argv[2];
 
-if (command === 'init') {
-  init();
+if (command === 'initTask') {
+  initTask();
 }
 else if (command === 'is-alive') {
   isAliveTask();
@@ -33,7 +33,7 @@ function printUsage() {
   console.log('Usage: ' + optimist.$0 + ' [command] [options...]');
   console.log('');
   console.log('Commands:');
-  console.log('  init          generates a config file for the import / export / sync process');
+  console.log('  initTask          generates a config file for the import / export / sync process');
   console.log('  sync          runs the sync process');
   console.log('  import        runs an import process');
   console.log('  export        runs an export process');

@@ -41,7 +41,7 @@ async function validateAndParseRequest(request) {
     forbiddenError.type = FORBIDDEN;
     throw forbiddenError;
   }
-  return payloadJson;
+  return payloadJson.data;
 }
 
 async function logRequest(name, handler) {
@@ -68,8 +68,11 @@ async function logRequest(name, handler) {
 
 export async function post_isAlive(request) {
   return await logRequest('isAlive', async () => {
-    let payloadJson = await validateAndParseRequest(request)
-    return 'ok';
+    let data = await validateAndParseRequest(request)
+    if (data.isAlive === '?')
+      return 'ok';
+    else
+      throw new Error('protocol error - the isAlive API expects isAlive member in the data payload');
   })
 }
 

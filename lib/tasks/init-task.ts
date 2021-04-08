@@ -1,16 +1,16 @@
 import readline  from "readline-promise";
 import chalk from 'chalk';
-import {saveConfig} from "./config";
+import {saveConfig} from "../config";
 
 
-export default async function init() {
+export default async function initTask() {
   const rlp = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
     terminal: true
   });
 
-  console.log(chalk.bgYellow('hello to velo-sync init'));
+  console.log(chalk.bgYellow('hello to velo-sync initTask'));
 
   let siteUrl = await rlp.questionAsync('what is the url of the site homepage? ')
   let secret = await rlp.questionAsync('what is the velo-sync secret? ')
