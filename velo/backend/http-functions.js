@@ -3,8 +3,8 @@ import wixData from 'wix-data';
 import crypto from 'crypto';
 import PromiseQueue from 'promise-queue';
 import {mediaManager} from 'wix-media-backend';
+import wixSecretsBackend from 'wix-secrets-backend';
 
-const secret = '...YOUR wix-code-rets SECRET, FROM THE CONFIG FILE...';
 // URL to call this HTTP function from your published site looks like:
 // Premium site - https://mysite.com/_functions/example/multiply?leftOperand=3&rightOperand=4
 // Free site - https://username.wixsite.com/mysite/_functions/example/multiply?leftOperand=3&rightOperand=4
@@ -32,9 +32,11 @@ function Queue(concurrency, tasks) {
 async function validateAndParseRequest(request) {
   const payload = await request.body.text();
   const payloadJson = JSON.parse(payload, dateReviver);
+  const secret = await wixSecretsBackend.getSecret("velo-sync")
   const hmac = crypto.createHmac('sha256', secret);
-  hmac.update(payload);
-  if (hmac.digest('hex') !== payloadJson.signature) {
+  hmac.update(JSON.stringify(payloadJson.data, dateReplacer))
+  const digest = hmac.digest('hex');
+  if (digest !== payloadJson.signature) {
     let forbiddenError = new Error('invalid signature check')
     forbiddenError.type = FORBIDDEN;
     throw forbiddenError;
@@ -46,7 +48,7 @@ async function logRequest(name, handler) {
   console.log(name, 'start');
   let start = new Date().getTime();
   try {
-    let response = handler();
+    let response = await handler();
     let now = new Date().getTime();
     console.log(name, 'completed ok, time:', now - start)
     return ok({body: response});

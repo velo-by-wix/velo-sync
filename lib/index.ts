@@ -1,5 +1,6 @@
 import optimist from 'optimist';
 import init from './init';
+import isAliveTask from "./is-alive-task";
 
 if (process.argv.length < 3) {
   printUsage();
@@ -10,6 +11,9 @@ let command = process.argv[2];
 
 if (command === 'init') {
   init();
+}
+else if (command === 'is-alive') {
+  isAliveTask();
 }
 else if (command === 'sync') {
   // runSync();

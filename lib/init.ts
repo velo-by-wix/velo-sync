@@ -1,6 +1,6 @@
 import readline  from "readline-promise";
 import chalk from 'chalk';
-import {promises as fs} from 'fs';
+import {saveConfig} from "./config";
 
 
 export default async function init() {
@@ -14,6 +14,7 @@ export default async function init() {
 
   let siteUrl = await rlp.questionAsync('what is the url of the site homepage? ')
   let secret = await rlp.questionAsync('what is the velo-sync secret? ')
-  await fs.writeFile('config.json', JSON.stringify({siteUrl, secret}));
+  let config = {siteUrl, secret};
+  await saveConfig(config, 'config.json')
   rlp.close();
 }
