@@ -16,6 +16,11 @@ export async function isAlive(config: Config) {
         throw new Error(`failed to call isAlive API - got response ${res} but expecting 'ok'`);
 }
 
+// export async function getSchema(config: Config) {
+//     let res = await invokeApi(config, 'getSchema', {collection: 'items'});
+//     console.log(res);
+// }
+
 export async function insertItemBatch(config: Config, collection: string, items: Array<any>): Promise<WixDataBulkResult> {
     return await invokeApi(config, 'insertItemBatch', {
         items, collection

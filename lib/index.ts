@@ -1,6 +1,7 @@
 import optimist from 'optimist';
 import initTask from './tasks/init-task';
 import isAliveTask from "./tasks/is-alive-task";
+import importTask from "./tasks/import-task";
 
 if (process.argv.length < 3) {
   printUsage();
@@ -19,7 +20,20 @@ else if (command === 'sync') {
   // runSync();
 }
 else if (command === 'import') {
-  // runImport();
+  let argv = optimist
+    .usage('Usage: $0 import -f <scv filename> -c <collection>')
+      .demand(  'f')
+      .alias(   'f', 'filename')
+      .describe('f', 'csv filename to import')
+      .demand(  'c')
+      .describe('c', 'the name of the collection to import into')
+      .alias(   'c', 'collection')
+    .parse(process.argv.slice(3));
+
+  let filename = argv.filename;
+  let collection = argv.collection;
+
+  importTask(filename, collection);
 }
 else if (command === 'export') {
   // runExport();
