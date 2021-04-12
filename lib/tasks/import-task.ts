@@ -1,5 +1,5 @@
-import {SCVSourceQueue} from "../source-queue";
-import {ImportItemQueue} from "../import-item-queue";
+import {SCVSourceQueue} from "../engines/source-queue";
+import {ImportItemQueue} from "../engines/import-item-queue";
 import {readConfig} from "../config";
 import logger from '../logger';
 
@@ -30,5 +30,7 @@ function runImport(filename: string, collection: string) {
             await sync.flush()
             resolve();
         });
+
+        source.resume();
     })
 }

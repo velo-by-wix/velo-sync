@@ -1,7 +1,8 @@
-import {Config} from "./config";
+import {Config} from "../config";
 import Queue from 'promise-queue';
-import {insertItemBatch} from "./velo-api";
-import logger from './logger';
+import {insertItemBatch} from "../velo/velo-api";
+import logger from '../logger';
+import {checkThrottling} from "../throttling";
 
 export class ImportItemQueue {
     private readonly config: Config;
@@ -30,12 +31,14 @@ export class ImportItemQueue {
             return Promise.resolve();
     }
 
-    async doInsert() {
+    async doInsert(batchToInsert: Array<any>) {
         let thisBatchNum = this.batchNum++;
-        let batchSize = this.currentBatch.length;
+        let batchSize = batchToInsert.length;
+        await checkThrottling(1);
         logger.trace(`  importing batch ${thisBatchNum} of ${batchSize} items`)
-        let insertResult = await insertItemBatch(this.config, this.collection, this.currentBatch);
+        let insertResult = await insertItemBatch(this.config, this.collection, batchToInsert);
         logger.trace(`    imported batch ${thisBatchNum} of ${batchSize} items. `)
+        logger.dump(insertResult);
         this.triggerItemDone(batchSize);
         return insertResult;
     }
@@ -46,7 +49,7 @@ export class ImportItemQueue {
     }
 
     async flush() {
-        let insertPromise = this.doInsert();
+        let insertPromise = this.doInsert(this.currentBatch);
         this.currentBatch = [];
         return insertPromise;
     }

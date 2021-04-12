@@ -1,7 +1,7 @@
-import {Config} from "./config";
+import {Config} from "../config";
 import crypto from "crypto";
 import axios from "axios";
-import logger from "./logger";
+import logger from "../logger";
 
 function dateReplacer(key, value) {
     let v = this[key];

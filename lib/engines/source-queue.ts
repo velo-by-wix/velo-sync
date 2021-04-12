@@ -23,6 +23,8 @@ export class SCVSourceQueue implements SourceQueue {
             .createReadStream(filename)
             .pipe(csv());
 
+        this.stream.pause();
+
         this.stream.on('data', data => {
             this.onItemHandler(data);
             this.handling += 1;
@@ -45,5 +47,9 @@ export class SCVSourceQueue implements SourceQueue {
 
     onItem(handler: (item) => void) {
         this.onItemHandler = handler;
+    }
+
+    resume() {
+        this.stream.resume();
     }
 }

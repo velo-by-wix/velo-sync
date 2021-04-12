@@ -1,6 +1,6 @@
 import {readConfig} from "../config";
 import chalk from 'chalk';
-import {isAlive} from "../velo-api";
+import {isAlive} from "../velo/velo-api";
 
 export default async function isAliveTask() {
     try {
