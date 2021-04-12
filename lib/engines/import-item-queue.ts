@@ -36,11 +36,10 @@ export class ImportItemQueue {
         let batchSize = batchToInsert.length;
         await checkThrottling(1);
         logger.trace(`  importing batch ${thisBatchNum} of ${batchSize} items`)
-        let insertResult = await insertItemBatch(this.config, this.collection, batchToInsert);
-        logger.trace(`    imported batch ${thisBatchNum} of ${batchSize} items. `)
-        logger.dump(insertResult);
+        let ir = await insertItemBatch(this.config, this.collection, batchToInsert);
+        logger.trace(`    imported batch ${thisBatchNum} of ${batchSize} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${ir.errors}`)
         this.triggerItemDone(batchSize);
-        return insertResult;
+        return ir;
     }
 
     private triggerItemDone(numberOfItems: number) {
