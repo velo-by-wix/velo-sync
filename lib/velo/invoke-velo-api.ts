@@ -12,13 +12,7 @@ function dateReplacer(key, value) {
 }
 
 async function post(url, payload) {
-    try {
-        return await axios.post(url, JSON.stringify(payload, dateReplacer))
-    }
-    catch (err) {
-        logger.error(`  Error: calling site API - POST ${url} \n            ${err.message} - ${err?.response?.data}`);
-        throw err;
-    }
+    return await axios.post(url, JSON.stringify(payload, dateReplacer))
 }
 
 function sleep(millis) {
@@ -27,21 +21,24 @@ function sleep(millis) {
     })
 }
 
-async function withRetry(op, shouldRetryPredicate: (error: Error, retryNum: number) => ShouldRetry) {
+async function withRetry(description: string, op, shouldRetryPredicate: (error: Error, retryNum: number) => ShouldRetry) {
     let shouldRetry = {doRetry: false, sleepTime: 0};
     let retryNum = 0;
+    let errors = [];
     do {
         try {
             return await op();
         }
         catch (e) {
+            errors.push(e);
             shouldRetry = shouldRetryPredicate(e, retryNum++);
             if (shouldRetry.doRetry) {
-                logger.trace(`    retrying in ${shouldRetry.sleepTime/1000} sec...`);
+                logger.trace(`    retrying / resuming in ${shouldRetry.sleepTime/1000} sec...`);
                 await sleep(shouldRetry.sleepTime);
             }
             else {
-                logger.trace('    another error', e.stack);
+                logger.error(`  Error: calling site API - ${description} failed after retry with errors:` +
+                    errors.reduce(err => `\n            ${err.message} - ${err?.response?.data}`));
                 throw e;
             }
         }
@@ -76,7 +73,7 @@ export default async function invokeApi(config: Config, name: string, data: any)
     };
 
     let apiUrl = `${config.siteUrl}/_functions/${name}`;
-    let result = await withRetry(
+    let result = await withRetry(`POST - ${apiUrl}`,
         () => post(apiUrl, payload), shouldRetry);
     return result.data;
 }
