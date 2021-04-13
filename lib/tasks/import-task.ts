@@ -19,7 +19,7 @@ function runImport(filename: string, collection: string) {
 
         let source = new SCVSourceQueue(filename);
         let config = await readConfig('config.json');
-        let sync = new ImportItemQueue(config, collection, 10, 50);
+        let sync = new ImportItemQueue(config, collection, 3, 50);
 
         sync.onItemDone(numberOfItems => source.completedHandlingItem(numberOfItems))
 
@@ -27,7 +27,7 @@ function runImport(filename: string, collection: string) {
             sync.importItem(item);
         });
         source.onEnd(async () => {
-            await sync.flush()
+            sync.flush()
             resolve();
         });
 

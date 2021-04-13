@@ -12,8 +12,10 @@ export class ImportItemQueue {
     private onItemDoneHandler: (numberOfItems: number) => void;
     private currentBatch: Array<any> = [];
     private readonly batchSize: number;
+    private queuedCount: number = 0;
     private completedCount: number = 0;
     private batchNum: number = 0;
+    private resolveCompleted: Array<(v: any) => void> = [];
     constructor(config: Config, collection: string, concurrency: number, batchSize: number) {
         this.config = config;
         this.collection = collection;
@@ -23,34 +25,44 @@ export class ImportItemQueue {
         this.queue = new Queue(concurrency, Infinity);
     }
 
-    async importItem(item) {
+    importItem(item): void {
         this.currentBatch.push(item);
         if (this.currentBatch.length >= this.batchSize)
-            return this.flush();
-        else
-            return Promise.resolve();
+            this.flush();
     }
 
     async doInsert(batchToInsert: Array<any>) {
-        let thisBatchNum = this.batchNum++;
-        let batchSize = batchToInsert.length;
-        await checkThrottling(1);
-        logger.trace(`  importing batch ${thisBatchNum} of ${batchSize} items`)
-        let ir = await insertItemBatch(this.config, this.collection, batchToInsert);
-        logger.trace(`    imported batch ${thisBatchNum} of ${batchSize} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${ir.errors}`)
-        this.triggerItemDone(batchSize);
-        return ir;
+        this.queue.add(async () => {
+            let thisBatchNum = this.batchNum++;
+            let batchSize = batchToInsert.length;
+            this.queuedCount += batchSize;
+            await checkThrottling(1);
+            logger.trace(`  importing batch ${thisBatchNum} of ${batchSize} items`)
+            let ir = await insertItemBatch(this.config, this.collection, batchToInsert);
+            logger.trace(`    imported batch ${thisBatchNum} of ${batchSize} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${ir.errors}`)
+            this.triggerDone(batchSize);
+            return ir;
+        })
     }
 
-    private triggerItemDone(numberOfItems: number) {
+    private triggerDone(numberOfItems: number) {
         this.completedCount += numberOfItems;
         this.onItemDoneHandler(numberOfItems)
+        if (this.completedCount === this.queuedCount) {
+            this.resolveCompleted.forEach(_ => _('done'));
+            this.resolveCompleted = [];
+        }
     }
 
-    async flush() {
-        let insertPromise = this.doInsert(this.currentBatch);
+    flush(): void {
+        this.doInsert(this.currentBatch);
         this.currentBatch = [];
-        return insertPromise;
+    }
+
+    complete() {
+        return new Promise(resolve => {
+            this.resolveCompleted.push(resolve);
+        })
     }
 
     onItemDone(handler: (numberOfItems: number) => void) {
