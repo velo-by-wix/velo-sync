@@ -33,15 +33,19 @@ export class ImportItemQueue {
 
     async doInsert(batchToInsert: Array<any>) {
         this.queue.add(async () => {
-            let thisBatchNum = this.batchNum++;
-            let batchSize = batchToInsert.length;
-            this.queuedCount += batchSize;
-            await checkThrottling(1);
-            logger.trace(`  importing batch ${thisBatchNum} with ${batchSize} items`)
-            let ir = await insertItemBatch(this.config, this.collection, batchToInsert);
-            logger.trace(`    imported batch ${thisBatchNum} with ${batchSize} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${ir.errors}`)
-            this.triggerDone(batchSize);
-            return ir;
+            try {
+                let thisBatchNum = this.batchNum++;
+                let batchSize = batchToInsert.length;
+                this.queuedCount += batchSize;
+                await checkThrottling(1);
+                logger.trace(`  importing batch ${thisBatchNum} with ${batchSize} items`)
+                let ir = await insertItemBatch(this.config, this.collection, batchToInsert);
+                logger.trace(`    imported batch ${thisBatchNum} with ${batchSize} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${ir.errors}`)
+                this.triggerDone(batchSize);
+            }
+            catch (e) {
+                logger.error(e);
+            }
         })
     }
 

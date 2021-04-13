@@ -16,7 +16,7 @@ async function post(url, payload) {
         return await axios.post(url, JSON.stringify(payload, dateReplacer))
     }
     catch (err) {
-        logger.error(`    Error: calling site API - POST ${url} \n      ${err.message}`);
+        logger.error(`  Error: calling site API - POST ${url} \n            ${err.message} - ${err?.response?.data}`);
         throw err;
     }
 }
@@ -27,8 +27,8 @@ function sleep(millis) {
     })
 }
 
-async function withRetry(op, shouldRetryPredicate) {
-    let shouldRetry = false;
+async function withRetry(op, shouldRetryPredicate: (error: Error, retryNum: number) => ShouldRetry) {
+    let shouldRetry = {doRetry: false, sleepTime: 0};
     let retryNum = 0;
     do {
         try {
@@ -36,24 +36,35 @@ async function withRetry(op, shouldRetryPredicate) {
         }
         catch (e) {
             shouldRetry = shouldRetryPredicate(e, retryNum++);
-            logger.trace('  retrying...');
-            if (shouldRetry) {
-                await sleep(500*retryNum);
+            if (shouldRetry.doRetry) {
+                logger.trace(`    retrying in ${shouldRetry.sleepTime/1000} sec...`);
+                await sleep(shouldRetry.sleepTime);
             }
             else {
-                logger.trace('  another error', e.stack);
+                logger.trace('    another error', e.stack);
                 throw e;
             }
         }
     } while (shouldRetry)
 }
 
-function shouldRetry(error, retryNum) {
-    return (
-        (error.message === 'Internal wixData error: Failed to parse server response') ||
-        (error.message === 'read ECONNRESET') ||
-        (error.message === 'Request failed with status code 502'))
-        && retryNum < 4;
+interface ShouldRetry {
+    doRetry: boolean,
+    sleepTime: number
+}
+const tooManyRequests = /Too many request/;
+function shouldRetry(error: Error, retryNum: number): ShouldRetry {
+    // @ts-ignore
+    if (tooManyRequests.exec(error?.response?.data) !== null && retryNum < 4)
+        return {doRetry: true, sleepTime: 60000}
+    else if ((
+            (error.message === 'Internal wixData error: Failed to parse server response') ||
+            (error.message === 'read ECONNRESET') ||
+            (error.message === 'Request failed with status code 502'))
+            && retryNum < 4)
+        return {doRetry: true, sleepTime: 500*retryNum};
+    else
+        return {doRetry: false, sleepTime: 0};
 }
 
 export default async function invokeApi(config: Config, name: string, data: any) {

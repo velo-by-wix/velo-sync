@@ -80,12 +80,7 @@ export async function post_insertItemBatch(request) {
     let data = await validateAndParseRequest(request)
     let itemsToInsert = data.items;
     let collection = data.collection;
-    try {
-      return await wixData.bulkInsert(collection, itemsToInsert, {suppressAuth: true});
-    }
-    catch (e) {
-      return ok({body: e.stack});
-    }
+    return await wixData.bulkInsert(collection, itemsToInsert, {suppressAuth: true});
   })
 }
 
