@@ -11,8 +11,11 @@ let credit = 1000;
 let usedPrice = 0;
 export async function checkThrottling(price) {
     if (usedPrice > credit) {
+        // multiple concurrent operations will sleep here
         await sleep(120000, logger);
-        usedPrice = 0;
+        // multiple concurrent operations will get here - and we want only the first to reset the usedPrice
+        if (usedPrice > credit)
+            usedPrice = 0;
     }
     usedPrice += price || 1;
 }
