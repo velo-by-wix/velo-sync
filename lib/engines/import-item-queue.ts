@@ -37,9 +37,9 @@ export class ImportItemQueue {
             let batchSize = batchToInsert.length;
             this.queuedCount += batchSize;
             await checkThrottling(1);
-            logger.trace(`  importing batch ${thisBatchNum} of ${batchSize} items`)
+            logger.trace(`  importing batch ${thisBatchNum} with ${batchSize} items`)
             let ir = await insertItemBatch(this.config, this.collection, batchToInsert);
-            logger.trace(`    imported batch ${thisBatchNum} of ${batchSize} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${ir.errors}`)
+            logger.trace(`    imported batch ${thisBatchNum} with ${batchSize} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${ir.errors}`)
             this.triggerDone(batchSize);
             return ir;
         })
