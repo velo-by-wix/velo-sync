@@ -1,7 +1,11 @@
-import {SCVSourceQueue} from "../engines/source-queue";
-import {ImportItemQueue} from "../engines/import-item-queue";
 import {readConfig} from "../config";
-import logger from '../logger';
+import logger from '../util/logger';
+import {LoggingStatistics} from '../util/statistics';
+
+import {SCVSourceQueue} from "../etl/source-scv";
+import {TransformBatch} from "../etl/transform-batch";
+import {End} from "../etl/sink-null";
+import {InsertData} from "../etl/transform-insert-data";
 
 export default async function importTask(filename: string, collection: string) {
     try {
@@ -17,37 +21,42 @@ export default async function importTask(filename: string, collection: string) {
 function runImport(filename: string, collection: string) {
     return new Promise<void>(async resolve => {
 
-        let readItems = 0;
-        let savedItems = 0;
-        let lastReported = 0;
-        let source = new SCVSourceQueue(filename);
+        let stats = new LoggingStatistics();
         let config = await readConfig('config.json');
-        let sync = new ImportItemQueue(config, collection, 10, 50);
 
-        sync.onItemDone(numberOfItems => {
-            savedItems += numberOfItems;
-            if (savedItems > lastReported + 1000) {
-                logger.log(`read ${readItems} items, saved ${savedItems} items`)
-                lastReported += 1000;
-            }
-            source.completedHandlingItem(numberOfItems)
-        })
+        let insert = new InsertData(config, collection, End, 5, 10, stats);
+        let batch = new TransformBatch(insert, 10, stats, 50);
+        let source = new SCVSourceQueue(filename, batch, stats);
 
-        source.onItem(item => {
-            readItems += 1;
-            sync.importItem(item);
-        });
-        source.onEnd(async () => {
-            sync.flush()
-            logger.strong(`completed reading source file ${filename}`);
-            logger.log(`read ${readItems} items, saved ${savedItems} items`)
-//            resolve();
-        });
+//         let sync = new ImportItemQueue(config, collection, 10, 50);
+//
+//         sync.onItemDone(numberOfItems => {
+//             savedItems += numberOfItems;
+//             if (savedItems > lastReported + 1000) {
+//                 logger.log(`read ${readItems} items, saved ${savedItems} items`)
+//                 lastReported += 1000;
+//             }
+//             source.completedHandlingItem(numberOfItems)
+//         })
+//
+//         source.onItem(item => {
+//             readItems += 1;
+//             sync.importItem(item);
+//         });
+//         source.onEnd(async () => {
+//             sync.flush()
+//             logger.strong(`completed reading source file ${filename}`);
+//             logger.log(`read ${readItems} items, saved ${savedItems} items`)
+// //            resolve();
+//         });
 
-        source.resume();
+        // source.resume();
 
-        await sync.complete();
-        logger.log(`read ${readItems} items, saved ${savedItems} items`);
+        await source.done();
+        await batch.done();
+        await insert.done();
+        stats.print();
+        // logger.log(`read ${readItems} items, saved ${savedItems} items`);
         resolve();
     })
 }

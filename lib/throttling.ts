@@ -1,4 +1,4 @@
-import logger from './logger';
+import logger from './util/logger';
 
 export function sleep(millis, logger) {
     logger.yellow(`************* throttling - waiting for ${millis} millis`);

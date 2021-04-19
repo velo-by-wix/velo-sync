@@ -1,7 +1,7 @@
 import {Config} from "../config";
 import Queue from 'promise-queue';
 import {insertItemBatch} from "../velo/velo-api";
-import logger from '../logger';
+import logger from '../util/logger';
 import {checkThrottling} from "../throttling";
 
 export class ImportItemQueue {
