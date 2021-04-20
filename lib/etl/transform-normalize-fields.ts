@@ -7,7 +7,10 @@ import * as path from "path";
 type FieldType = 'string' | 'number' | 'boolean' | 'Image' | 'Datetime' | 'Time' | 'RichText' | 'Reference' | 'URL' | 'Document' | 'Video' |
     'Audio' | 'Address' | 'Tags' | 'Array' | 'Object' | 'Gallery';
 export interface Schema {
-    [key: string]: FieldType
+    keyField: string,
+    fields: {
+        [key: string]: FieldType
+    }
 }
 
 /**
@@ -42,7 +45,8 @@ export class TransformNormalizeFields extends Transform<any, any> {
     }
 
     normalize(item: any) {
-        Object.keys(this.schema).forEach(key => {
+        item._id = ''+item[this.schema.keyField];
+        Object.keys(this.schema.fields).forEach(key => {
             try {
                 switch (key) {
                     case 'number': item[key] = Number(item[key]); break;
