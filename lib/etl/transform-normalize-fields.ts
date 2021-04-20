@@ -94,7 +94,7 @@ function parseGallery(val: string) {
     }
 }
 
-const imageExtensions = /^\.(png|jpg|jpeg|bmp|gif|eps)$/i;
+const imageExtensions = /^\.(png|jpg|jpeg|bmp|gif|eps|webp)$/i;
 function isImage(val: string): boolean {
     let url = new URL(val);
     let ext = path.extname(url.pathname);
