@@ -1,4 +1,4 @@
-import {readConfig} from "../config";
+import {readConfig} from "../configurations/config";
 import chalk from 'chalk';
 import {isAlive} from "../velo/velo-api";
 

@@ -1,6 +1,6 @@
 import readline  from "readline-promise";
 import chalk from 'chalk';
-import {saveConfig} from "../config";
+import {saveConfig} from "../configurations/config";
 
 
 export default async function initTask() {

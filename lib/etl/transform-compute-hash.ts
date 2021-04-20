@@ -2,7 +2,7 @@ import {Transform} from "./transform";
 import {Next} from "./source";
 import {Statistics} from "../util/statistics";
 import * as crypto from "crypto";
-import {Schema} from "./transform-normalize-fields";
+import {Schema} from "../configurations/schema";
 
 export class TransformComputeHash extends Transform<any, any> {
     private schema: Schema;

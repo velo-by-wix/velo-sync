@@ -3,15 +3,7 @@ import {Next} from "./source";
 import {Statistics} from "../util/statistics";
 import {URL} from 'url';
 import * as path from "path";
-
-type FieldType = 'string' | 'number' | 'boolean' | 'Image' | 'Datetime' | 'Time' | 'RichText' | 'Reference' | 'URL' | 'Document' | 'Video' |
-    'Audio' | 'Address' | 'Tags' | 'Array' | 'Object' | 'Gallery';
-export interface Schema {
-    keyField: string,
-    fields: {
-        [key: string]: FieldType
-    }
-}
+import {Schema} from "../configurations/schema";
 
 /**
  * transform values for reading values from CSV

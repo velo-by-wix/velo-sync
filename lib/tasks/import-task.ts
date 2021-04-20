@@ -1,4 +1,4 @@
-import {readConfig} from "../config";
+import {readConfig} from "../configurations/config";
 import logger from '../util/logger';
 import {LoggingStatistics} from '../util/statistics';
 
@@ -8,11 +8,12 @@ import {End} from "../etl/sink-null";
 import {InsertData} from "../etl/transform-insert-data";
 import {TransformComputeHash} from "../etl/transform-compute-hash";
 import {TransformNormalizeFields} from "../etl/transform-normalize-fields";
+import {readSchema} from "../configurations/schema";
 
-export default async function importTask(filename: string, collection: string) {
+export default async function importTask(filename: string, collection: string, schemaFilename: string) {
     try {
         logger.strong(`starting import ${filename} to ${collection}`);
-        await runImport(filename, collection);
+        await runImport(filename, collection, schemaFilename);
         logger.strong(`completed importing ${filename} to ${collection}`);
     }
     catch (e) {
@@ -20,11 +21,12 @@ export default async function importTask(filename: string, collection: string) {
     }
 }
 
-function runImport(filename: string, collection: string) {
+function runImport(filename: string, collection: string, schemaFilename: string) {
     return new Promise<void>(async resolve => {
 
         let stats = new LoggingStatistics();
         let config = await readConfig('config.json');
+        let schema = await readSchema(schemaFilename)
 
         let insert = new InsertData(config, collection, End, 5, 10, stats);
         let batch = new TransformBatch(insert, 10, stats, 50);

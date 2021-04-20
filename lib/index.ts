@@ -28,12 +28,16 @@ else if (command === 'import') {
       .demand(  'c')
       .describe('c', 'the name of the collection to import into')
       .alias(   'c', 'collection')
+      .demand(  's')
+      .describe('s', 'schema file describing the fields of the collection')
+      .alias(   's', 'schema')
     .parse(process.argv.slice(3));
 
   let filename = argv.filename;
   let collection = argv.collection;
+  let schema = argv.schema;
 
-  importTask(filename, collection);
+  importTask(filename, collection, schema);
 }
 else if (command === 'export') {
   // runExport();
