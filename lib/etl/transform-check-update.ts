@@ -3,15 +3,11 @@ import {Config} from "../configurations/config";
 import {Next} from "./source";
 import {Statistics} from "../util/statistics";
 import logger from "../util/logger";
-import {insertItemBatch} from "../velo/velo-api";
+import {checkUpdateState, ItemStatus, ItemWithStatus} from "../velo/velo-api";
 import {HasHashAndId} from "./transform-normalize-fields";
 
 
-interface UpdateCheckResponse {
-    item: HasHashAndId
-}
-
-export class TransformCheckUpdate extends Transform<Array<HasHashAndId>, Array<UpdateCheckResponse>> {
+export class TransformCheckUpdate extends Transform<Array<HasHashAndId>, Array<ItemWithStatus>> {
     private readonly config: Config;
     private readonly collection: string;
     private batchNum: number = 0;
@@ -21,20 +17,31 @@ export class TransformCheckUpdate extends Transform<Array<HasHashAndId>, Array<U
         this.collection = collection;
     }
 
-    flush(): Promise<any | undefined> {
+    flush(): Promise<Array<ItemWithStatus>> {
         return Promise.resolve(undefined);
     }
 
-    process(item: Array<any>): Promise<any | undefined> {
-        return this.insertBatch(item);
+    process(item: Array<HasHashAndId>): Promise<Array<ItemWithStatus>> {
+        return this.checkUpdateState(item);
     }
 
-    async insertBatch(batch: Array<any>): Promise<any> {
+    async checkUpdateState(batch: Array<HasHashAndId>): Promise<Array<ItemWithStatus>> {
         let thisBatchNum = this.batchNum++;
-        logger.trace(`  importing batch ${thisBatchNum} with ${batch.length} items`)
-        let ir = await insertItemBatch(this.config, this.collection, batch);
-        logger.trace(`    imported batch ${thisBatchNum} with ${batch.length} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${ir.errors}`)
-        this.stats.reportProgress('insert', batch.length);
+        logger.trace(`  check update state batch ${thisBatchNum} with ${batch.length} items`)
+        let itemStatuses = await checkUpdateState(this.config, this.collection, batch);
+        let {ok, needUpdate, notFound} = itemStatuses.reduce((aggregate, itemWithStatus) => {
+            if (itemWithStatus.status === ItemStatus.ok)
+                aggregate.ok++;
+            if (itemWithStatus.status === ItemStatus.needUpdate)
+                aggregate.needUpdate++;
+            if (itemWithStatus.status === ItemStatus.notFound)
+                aggregate.notFound++;
+            return aggregate;
+        }, {ok:0, needUpdate:0, notFound:0});
+
+        logger.trace(`    check update state batch ${thisBatchNum} with ${batch.length} items. ok: ${ok}, need update: ${needUpdate}, not found: ${notFound}`)
+        this.stats.reportProgress('check update state', batch.length);
+        return itemStatuses;
     }
 
 

@@ -160,35 +160,32 @@ export async function post_batchCheckUpdateState(request) {
     let data = await validateAndParseRequest(request)
 
     const collection = data.collection;
-    const items = data.data.items; //{id}[]
+    const items = data.items;
 
-    let queries = items.map(item => wixData.query(collection).eq('_id', item.id));
+    let queries = items.map(item => wixData.query(collection).eq('_id', item._id));
 
     let query = queries.reduce((accuQuery, query) => (!!accuQuery)?accuQuery.or(query): query);
     let result = [];
     let itemsToUpdate = [];
-    let cOk =0, cNeedUpdate = 0, cNotFound = 0;
     let res = await query.find({suppressAuth: true});
     items.forEach(item => {
-      let foundItem = res.items.find(_ => _._id === item.id);
-      if (foundItem && foundItem._hash === item.hash) {
+      let foundItem = res.items.find(_ => _._id === item._id);
+      if (foundItem && foundItem._hash === item._hash) {
         itemsToUpdate.push(foundItem);
-        cOk += 1;
-        result.push({status: 'ok', id: item.id});
+        result.push({status: 'ok', _id: item._id});
       }
       else if (foundItem) {
-        cNeedUpdate += 1;
-        result.push({status: 'need-update', id: item.id});
+        result.push({status: 'need-update', _id: item._id});
       }
       else {
-        cNotFound += 1;
-        result.push({status: 'not-found', id: item.id});
+        result.push({status: 'not-found', _id: item._id});
       }
     });
     await wixData.bulkUpdate(collection, itemsToUpdate, {suppressAuth: true});
     return JSON.stringify(result);
   })
 }
+
 //
 // export async function post_getImageUploadUrl(request) {
 //   console.log('getImageUploadUrl start');
