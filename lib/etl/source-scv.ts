@@ -4,10 +4,10 @@ import csv from "csv-parser";
 import {Next, Source} from "./source";
 import {Statistics} from "../util/statistics";
 
-export class SCVSourceQueue extends Source<any> {
+export class SCVSourceQueue extends Source<Record<string, any>> {
     private stream: Readable;
 
-    constructor(filename: string, next: Next<any>, stats: Statistics) {
+    constructor(filename: string, next: Next<Record<string, any>>, stats: Statistics) {
         super(next, stats);
         this.stream = fs
             .createReadStream(filename)

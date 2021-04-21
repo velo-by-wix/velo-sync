@@ -7,7 +7,7 @@ import {TransformBatch} from "../etl/transform-batch";
 import {End} from "../etl/sink-null";
 import {InsertData} from "../etl/transform-insert-data";
 import {TransformComputeHash} from "../etl/transform-compute-hash";
-import {TransformNormalizeFields} from "../etl/transform-normalize-fields";
+import {HasHashAndId, TransformNormalizeFields} from "../etl/transform-normalize-fields";
 import {readSchema} from "../configurations/schema";
 
 export default async function importTask(filename: string, collection: string, schemaFilename: string) {
@@ -29,7 +29,7 @@ function runImport(filename: string, collection: string, schemaFilename: string)
         let schema = await readSchema(schemaFilename)
 
         let insert = new InsertData(config, collection, End, 5, 10, stats);
-        let batch = new TransformBatch(insert, 10, stats, 50);
+        let batch = new TransformBatch<HasHashAndId>(insert, 10, stats, 50);
         let normalize = new TransformNormalizeFields(batch, 10, stats, schema);
         let hash = new TransformComputeHash(normalize, 10, stats, schema);
         let source = new SCVSourceQueue(filename, hash, stats);

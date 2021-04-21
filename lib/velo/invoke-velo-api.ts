@@ -1,4 +1,4 @@
-import {Config} from "../config";
+import {Config} from "../configurations/config";
 import crypto from "crypto";
 import axios from "axios";
 import logger from "../util/logger";

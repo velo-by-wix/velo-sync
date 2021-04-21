@@ -4,6 +4,11 @@ import {Statistics} from "../util/statistics";
 import {URL} from 'url';
 import * as path from "path";
 import {Schema} from "../configurations/schema";
+import {HasHash} from "./transform-compute-hash";
+
+export interface HasHashAndId extends HasHash {
+    _id: string
+}
 
 /**
  * transform values for reading values from CSV
@@ -19,24 +24,24 @@ import {Schema} from "../configurations/schema";
  *   - gallery json - [{"slug":"11062b_3e9b458a96de408e88ef309728ed98be~mv2","src":"wix:image://v1/11062b_3e9b458a96de408e88ef309728ed98be~mv2.jpg/eggs#originWidth=6720&originHeight=4480","title":"","type":"image","settings":{}},{"slug":"11062b_82b7c98240e643db9c54e81f2e8475ee~mv2","src":"wix:image://v1/11062b_82b7c98240e643db9c54e81f2e8475ee~mv2.jpg/grey-cat#originWidth=3845&originHeight=2884","title":"","type":"image","settings":{}},{"slug":"5eb203c1e4034e9480941b8cc8ce907b","src":"wix:image://v1/5eb203c1e4034e9480941b8cc8ce907b.jpg/easter-preparations#originWidth=5600&originHeight=3737","title":"","type":"image","settings":{}}]
  *   - list of urls - http://image1.jpg, file:///image2.jpg, http://image3.jpg
  */
-export class TransformNormalizeFields extends Transform<any, any> {
+export class TransformNormalizeFields extends Transform<HasHash, HasHashAndId> {
     private schema: Schema;
 
-    constructor(next: Next<Array<any>>, queueLimit: number, stats: Statistics, schema: Schema) {
+    constructor(next: Next<object>, queueLimit: number, stats: Statistics, schema: Schema) {
         super(next, 1, queueLimit, stats);
         this.schema = schema;
     }
 
 
-    flush(): Promise<Array<any>> {
+    flush(): Promise<HasHashAndId> {
         return Promise.resolve(undefined);
     }
 
-    process(item: any): Promise<Array<any>> {
+    process(item: HasHash): Promise<HasHashAndId> {
         return Promise.resolve(this.normalize(item));
     }
 
-    normalize(item: any) {
+    normalize(item: HasHash): HasHashAndId {
         item._id = ''+item[this.schema.keyField];
         Object.keys(this.schema.fields).forEach(key => {
             try {
@@ -53,7 +58,7 @@ export class TransformNormalizeFields extends Transform<any, any> {
             }
             catch (e) {}
         });
-        return item;
+        return item as HasHashAndId;
     }
 }
 

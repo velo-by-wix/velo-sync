@@ -4,9 +4,14 @@ import {Next} from "./source";
 import {Statistics} from "../util/statistics";
 import logger from "../util/logger";
 import {insertItemBatch} from "../velo/velo-api";
+import {HasHashAndId} from "./transform-normalize-fields";
 
 
-export class InsertData extends Transform<Array<any>, any> {
+interface UpdateCheckResponse {
+    item: HasHashAndId
+}
+
+export class TransformCheckUpdate extends Transform<Array<HasHashAndId>, Array<UpdateCheckResponse>> {
     private readonly config: Config;
     private readonly collection: string;
     private batchNum: number = 0;

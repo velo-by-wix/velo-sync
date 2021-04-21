@@ -1,4 +1,4 @@
-import {Config} from "../config";
+import {Config} from "../configurations/config";
 import Queue from 'promise-queue';
 import {insertItemBatch} from "../velo/velo-api";
 import logger from '../util/logger';
