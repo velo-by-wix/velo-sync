@@ -9,6 +9,7 @@ import {TransformComputeHash} from "../etl/transform-compute-hash";
 import {HasHashAndId, TransformNormalizeFields} from "../etl/transform-normalize-fields";
 import {readSchema} from "../configurations/schema";
 import {TransformCheckUpdate} from "../etl/transform-check-update";
+import {TransformImportFiles} from "../etl/transform-import-files";
 
 export default async function importTask(filename: string, collection: string, schemaFilename: string) {
     try {
@@ -28,7 +29,8 @@ function runImport(filename: string, collection: string, schemaFilename: string)
         let config = await readConfig('config.json');
         let schema = await readSchema(schemaFilename)
 
-        let checkUpdate = new TransformCheckUpdate(config, collection, End, 5, 10, stats);
+        let importImages = new TransformImportFiles(config, schema, collection, End, 5, 10, stats);
+        let checkUpdate = new TransformCheckUpdate(config, collection, importImages, 5, 10, stats);
         let batch = new TransformBatch<HasHashAndId>(checkUpdate, 10, stats, 50);
         let normalize = new TransformNormalizeFields(batch, 10, stats, schema);
         let hash = new TransformComputeHash(normalize, 10, stats, schema);

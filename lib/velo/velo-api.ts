@@ -1,6 +1,7 @@
 import {Config} from "../configurations/config";
 import invokeApi from "./invoke-velo-api";
 import {HasHashAndId} from "../etl/transform-normalize-fields";
+import * as request from 'request-promise';
 
 export interface WixDataBulkResult {
     inserted: number,               // The number of inserted items.
@@ -50,4 +51,34 @@ export async function checkUpdateState(config: Config, collection: string, items
         let item = items.find(_ => _._id = itemStatus._id)
         return {status: itemStatus.status, item}
     })
+}
+
+export interface UploadUrl {
+    uploadUrl: string,
+    uploadToken: string
+}
+export async function getUploadUrl(config: Config, mediaType: string, mimeType: string, _id: string, collection: string, fieldName: string): Promise<UploadUrl> {
+    return await invokeApi(config, 'getImageUploadUrl', {
+        mimeType,
+        _id,
+        collection,
+        fieldName,
+        mediaType
+    })
+}
+
+export async function uploadFile(uploadUrl: UploadUrl, contentStream: Buffer, fileName: string, contentType: string) {
+    const body = {
+        upload_token: uploadUrl.uploadToken,
+        file: {
+            value: contentStream,
+            options: {
+                filename: fileName,
+                contentType: contentType
+            }
+        }
+    };
+
+    const response = await request.post({url: uploadUrl, formData: body, json: true});
+    return `wix:image://v1/${response[0].file_name}/${response[0].original_file_name}#originWidth=${response[0].width}&originHeight=${response[0].height}`;
 }

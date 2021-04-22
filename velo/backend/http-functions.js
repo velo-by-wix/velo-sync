@@ -186,53 +186,35 @@ export async function post_batchCheckUpdateState(request) {
   })
 }
 
-//
-// export async function post_getImageUploadUrl(request) {
-//   console.log('getImageUploadUrl start');
-//   try {
-//     const payload = await request.body.text();
-//     const payloadJson = JSON.parse(payload, dateReviver);
-//
-//     const hmac = crypto.createHmac('sha256', secret);
-//     hmac.update(JSON.stringify(payloadJson.data, dateReplacer));
-//     if (hmac.digest('hex') !== payloadJson.signature) {
-//       return forbidden({body: 'invalid signature'});
-//     }
-//
-//     const mimeTypes = payloadJson.data.mimeTypes;
-//     const resource = payloadJson.data.resource;
-//     const id = payloadJson.data.id;
-//
-//     let uploadUrlObjs = [];
-//     await Queue(10, mimeTypes.map((mimeType, index) => {
-//       return async function() {
-//         let uploadUrlObj = await mediaManager.getUploadUrl('/mls-images',
-//           {
-//             "mediaOptions": {
-//               "mimeType": mimeType,
-//               "mediaType": "image"
-//             },
-//             "metadataOptions": {
-//               "isPrivate": false,
-//               "isVisitorUpload": false,
-//               "context": {
-//                 "resource": resource,
-//                 "id": id
-//               }
-//             }
-//           });
-//         uploadUrlObjs[index] = uploadUrlObj;
-//       }
-//     }));
-//
-//     console.log('getImageUploadUrl complete', `${resource} id: ${id}`);
-//     return ok({body: uploadUrlObjs});
-//   }
-//   catch (e) {
-//     console.log('getImageUploadUrl error', e.message, e.stack);
-//     return ok({body: e.stack});
-//   }
-// }
+export async function post_getImageUploadUrl(request) {
+  return await logRequest('isAlive', async () => {
+    let data = await validateAndParseRequest(request)
+
+    const mimeType = data.mimeTypes;
+    const _id = data._id;
+    const fieldName = data.fieldName;
+    const collection = data.collection;
+    const mediaType = data.mediaType;
+
+    let uploadUrlObj = await mediaManager.getUploadUrl('/synced-images',
+      {
+        "mediaOptions": {
+          mimeType,
+          mediaType
+        },
+        "metadataOptions": {
+          "isPrivate": false,
+          "isVisitorUpload": false,
+          "context": {
+            _id,
+            fieldName,
+            collection
+          }
+        }
+      });
+    return uploadUrlObj;
+  });
+}
 
 const dateRegex = /^Date\((\d+)\)$/;
 function dateReviver(key, value) {
