@@ -29,7 +29,7 @@ type UploadResult = {newValue: any, uploadedImages: number}
  */
 function isVeloUrl(fileUrl: string): boolean {
     let [scheme, ...rest] = fileUrl.split('//');
-    return ['wix:image', 'wix:video'].includes(scheme);
+    return ['wix:image:', 'wix:video:'].includes(scheme);
 }
 
 /**

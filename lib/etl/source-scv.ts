@@ -1,6 +1,6 @@
 import {Readable} from "stream";
 import fs from "fs";
-import csv from "csv-parser";
+import * as csv from 'fast-csv';
 import {Next, Source} from "./source";
 import {Statistics} from "../util/statistics";
 
@@ -11,7 +11,7 @@ export class SCVSourceQueue extends Source<Record<string, any>> {
         super(next, stats);
         this.stream = fs
             .createReadStream(filename)
-            .pipe(csv());
+            .pipe(csv.parse({headers: true}));
 
         this.stream.on('data', data => {
             this.stream.pause();
