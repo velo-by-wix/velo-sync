@@ -24,6 +24,12 @@ export async function insertItemBatch(config: Config, collection: string, items:
     });
 }
 
+export async function saveItemBatch(config: Config, collection: string, items: Array<any>): Promise<WixDataBulkResult> {
+    return await invokeApi(config, 'saveItemBatch', {
+        items, collection
+    });
+}
+
 export enum ItemStatus {
     ok, needUpdate, notFound
 }

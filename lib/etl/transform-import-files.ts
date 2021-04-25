@@ -89,12 +89,12 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
                 let newValue, uploadedImages;
                 if (fieldType === 'Image')
                     ({newValue, uploadedImages} = await this.importImage(item[key], item.item._id, key))
-                else if (fieldType === 'Document')
-                    ({newValue, uploadedImages} = await this.importDocument(item[key], item.item._id, key))
-                else if (fieldType === 'Video')
-                    ({newValue, uploadedImages} = await this.importVideo(item[key], item.item._id, key))
-                else if (fieldType === 'Audio')
-                    ({newValue, uploadedImages} = await this.importAudio(item[key], item.item._id, key))
+                // else if (fieldType === 'Document')
+                //     ({newValue, uploadedImages} = await this.importDocument(item[key], item.item._id, key))
+                // else if (fieldType === 'Video')
+                //     ({newValue, uploadedImages} = await this.importVideo(item[key], item.item._id, key))
+                // else if (fieldType === 'Audio')
+                //     ({newValue, uploadedImages} = await this.importAudio(item[key], item.item._id, key))
                 else if (fieldType === 'Gallery')
                     ({newValue, uploadedImages} = await this.importGallery(item[key], item.item._id, key))
                 item[key] = newValue;
@@ -120,20 +120,28 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         return {newValue: uploadedImageUrl, uploadedImages: 1}
     }
 
-    async importDocument(documentUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
+    // async importDocument(documentUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
+    //
+    // }
+    //
+    // async importVideo(videoUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
+    //
+    // }
+    //
+    // async importAudio(audioUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
+    //
+    // }
 
-    }
-
-    async importVideo(videoUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
-
-    }
-
-    async importAudio(audioUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
-
-    }
-
-    async importGallery(galleryUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
-
+    async importGallery(gallery: any, _id: string, fieldName: string): Promise<UploadResult> {
+        if (Array.isArray(gallery)) {
+            for (let galleryItem of gallery) {
+                if (galleryItem.type === 'image')
+                    galleryItem.url = await this.importImage(galleryItem.url, _id, fieldName);
+                // else if (galleryItem.type === 'video')
+                //     galleryItem.url = await this.importVideo(galleryItem.url, _id, fieldName);
+            }
+        }
+        return gallery;
     }
 
     async checkNeedUpload(fileUrl: string): Promise<{shouldUpload: boolean, veloUrl?: string}> {

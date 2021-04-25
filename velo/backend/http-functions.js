@@ -84,29 +84,14 @@ export async function post_insertItemBatch(request) {
   })
 }
 
-// export async function post_saveItemBatch(request) {
-//   console.log('saveItemBatch start');
-//   const payload = await request.body.text();
-//   const payloadJson = JSON.parse(payload, dateReviver);
-//   const collection = payloadJson.collection;
-//   const items = payloadJson.data;
-//
-//   const hmac = crypto.createHmac('sha256', secret);
-//   hmac.update(JSON.stringify(items, dateReplacer) + collection);
-//   if (hmac.digest('hex') !== payloadJson.signature) {
-//     return forbidden({body: 'invalid signature'});
-//   }
-//
-//   try {
-//     let bulkResult = await wixData.bulkSave(collection, items, {suppressAuth: true});
-//     console.log('saveItemBatch bulkUpdate', bulkResult);
-//   }
-//   catch (e) {
-//     return ok({body: e.stack});
-//   }
-//   console.log('saveItemBatch completed');
-//   return ok({body: 'ok'});
-// }
+export async function post_saveItemBatch(request) {
+  return await logRequest('saveItemBatch', async () => {
+    let data = await validateAndParseRequest(request)
+    let items = data.items;
+    let collection = data.collection;
+    return await wixData.bulkSave(collection, items, {suppressAuth: true});
+  })
+}
 //
 // export async function post_clearStale(request) {
 //   console.log('clearStale start');
