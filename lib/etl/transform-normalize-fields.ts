@@ -5,7 +5,7 @@ import {URL} from 'url';
 import * as path from "path";
 import {Schema} from "../configurations/schema";
 import {HasHash} from "./transform-compute-hash";
-
+import {camelCase} from 'change-case';
 export interface HasHashAndId extends HasHash {
     _id: string
 }
@@ -54,6 +54,12 @@ export class TransformNormalizeFields extends Transform<HasHash, HasHashAndId> {
                     case 'Address': item[key] = parseJson(item[key]); break;
                     case 'Tags': item[key] = parseJson(item[key]); break;
                     case 'Gallery': item[key] = parseGallery(item[key]); break;
+                }
+                let normalizedKey = camelCase(key);
+                if (normalizedKey !== key) {
+                    let val = item[key];
+                    delete item[key];
+                    item[normalizedKey] = val;
                 }
             }
             catch (e) {}
