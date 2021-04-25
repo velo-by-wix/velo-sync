@@ -1,0 +1,8 @@
+{
+  "keyField": "id",
+  "fields": {
+    "id": "string",
+    "File Name": "string",
+    "gallery": "Gallery"
+  }
+}

@@ -45,7 +45,7 @@ export class TransformNormalizeFields extends Transform<HasHash, HasHashAndId> {
         item._id = ''+item[this.schema.keyField];
         Object.keys(this.schema.fields).forEach(key => {
             try {
-                switch (key) {
+                switch (this.schema.fields[key]) {
                     case 'number': item[key] = Number(item[key]); break;
                     case 'boolean': item[key] = parseBoolean(item[key]); break;
                     case 'Datetime': item[key] = parseDate(item[key]); break;
@@ -92,7 +92,7 @@ function parseGallery(val: string) {
         return JSON.parse(val)
     }
     catch (e) {
-        val.split(',').map(url => {
+        return val.split(',').map(url => {
             return {
                 url,
                 type: isImage(url)?'image':'video'
@@ -101,9 +101,7 @@ function parseGallery(val: string) {
     }
 }
 
-const imageExtensions = /^\.(png|jpg|jpeg|bmp|gif|eps|webp)$/i;
+const imageExtensions = /\.(png|jpg|jpeg|bmp|gif|eps|webp)[\?#]?/i;
 function isImage(val: string): boolean {
-    let url = new URL(val);
-    let ext = path.extname(url.pathname);
-    return !!ext.match(imageExtensions);
+    return !!val.match(imageExtensions);
 }
