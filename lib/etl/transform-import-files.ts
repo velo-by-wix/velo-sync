@@ -60,8 +60,8 @@ async function toVeloUrl(staticUrl: string) {
     return staticUrl;
 }
 
-const isFileProtocol = /file:\//i;
-const isHttpProtocol = /http(s)?:\//i;
+const isFileProtocol = /file:/i;
+const isHttpProtocol = /http(s)?:/i;
 interface ParseUrlResult {
     filePath?: string,
     isFile?: boolean,
