@@ -6,7 +6,7 @@ import logger from "../util/logger";
 import {getUploadUrl, ItemStatus, ItemWithStatus, uploadFile} from "../velo/velo-api";
 import {Schema} from "../configurations/schema";
 import {URL} from 'url';
-import fs from 'fs/promises';
+import {promises as fs} from 'fs';
 import probe from 'probe-image-size';
 import axios from "axios";
 
@@ -88,16 +88,16 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
                 let fieldType = this.schema.fields[key];
                 let newValue, uploadedImages;
                 if (fieldType === 'Image')
-                    ({newValue, uploadedImages} = await this.importImage(item[key], item.item._id, key))
+                    ({newValue, uploadedImages} = await this.importImage(item.item[key], item.item._id, key))
                 // else if (fieldType === 'Document')
-                //     ({newValue, uploadedImages} = await this.importDocument(item[key], item.item._id, key))
+                //     ({newValue, uploadedImages} = await this.importDocument(item.item[key], item.item._id, key))
                 // else if (fieldType === 'Video')
-                //     ({newValue, uploadedImages} = await this.importVideo(item[key], item.item._id, key))
+                //     ({newValue, uploadedImages} = await this.importVideo(item.item[key], item.item._id, key))
                 // else if (fieldType === 'Audio')
-                //     ({newValue, uploadedImages} = await this.importAudio(item[key], item.item._id, key))
+                //     ({newValue, uploadedImages} = await this.importAudio(item.item[key], item.item._id, key))
                 else if (fieldType === 'Gallery')
-                    ({newValue, uploadedImages} = await this.importGallery(item[key], item.item._id, key))
-                item[key] = newValue;
+                    ({newValue, uploadedImages} = await this.importGallery(item.item[key], item.item._id, key))
+                item.item[key] = newValue;
                 totalUploadedImages += uploadedImages;
             }
         }
