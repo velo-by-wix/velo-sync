@@ -75,7 +75,7 @@ export async function checkUpdateState(config: Config, collection: string, items
     }) as Array<ApiItemStatusResult>;
 
     return apiResult.map(itemStatus => {
-        let item = items.find(_ => _._id = itemStatus._id)
+        let item = items.find(_ => _._id === itemStatus._id)
         return {status: itemStatusFromString(itemStatus.status), item}
     })
 }
