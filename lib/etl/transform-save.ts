@@ -30,9 +30,14 @@ export class TransformSave extends Transform<Array<ItemWithStatus>, Array<ItemWi
 
     async saveItems(batch: Array<HasHashAndId>): Promise<void> {
         let thisBatchNum = this.batchNum++;
-        logger.trace(`  saving batch ${thisBatchNum} with ${batch.length} items`)
-        let ir = await saveItemBatch(this.config, this.collection, batch);
-        logger.trace(`    saving batch ${thisBatchNum} with ${batch.length} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${ir.errors}`)
+        if (batch.length === 0) {
+            logger.trace(`  saving batch ${thisBatchNum} - skipping batch with no items needing save`)
+        }
+        else {
+            logger.trace(`  saving batch ${thisBatchNum} with ${batch.length} items`)
+            let ir = await saveItemBatch(this.config, this.collection, batch);
+            logger.trace(`    saving batch ${thisBatchNum} with ${batch.length} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${ir.errors}`)
+        }
         this.stats.reportProgress('update', batch.length);
     }
 
