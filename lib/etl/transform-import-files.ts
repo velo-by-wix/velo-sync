@@ -9,6 +9,9 @@ import {URL} from 'url';
 import {promises as fs} from 'fs';
 import probe from 'probe-image-size';
 import axios from "axios";
+import path from 'path';
+import {camelCase} from 'change-case';
+
 
 interface ProbeImageSizeResult {
     width: number,
@@ -57,16 +60,39 @@ async function toVeloUrl(staticUrl: string) {
     return staticUrl;
 }
 
+const isFileProtocol = /file:\//i;
+const isHttpProtocol = /http(s)?:\//i;
+interface ParseUrlResult {
+    filePath?: string,
+    isFile?: boolean,
+    isHttp?: boolean,
+    fileName?: string
+}
+function parseUrl(imageUrl: string): ParseUrlResult {
+    try {
+        let url = new URL(imageUrl);
+        if (url.protocol.match(isFileProtocol))
+            return {isFile: true, filePath: url.pathname, fileName: path.basename(url.pathname)}
+        else if (url.protocol.match(isHttpProtocol))
+            return {isHttp: true, fileName: path.basename(url.pathname)}
+    }
+    catch (e) {
+        return {isFile: true, filePath: imageUrl, fileName: path.basename(imageUrl)}
+    }
+}
+
 export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array<ItemWithStatus>> {
     private readonly config: Config;
     private readonly schema: Schema;
     private readonly collection: string;
+    private readonly importFileFolder: string;
     private batchNum: number = 0;
-    constructor(config: Config, schema: Schema, collection: string, next: Next<Array<ItemWithStatus>>, concurrency: number, queueLimit: number, stats: Statistics) {
+    constructor(config: Config, schema: Schema, importFileFolder: string, collection: string, next: Next<Array<ItemWithStatus>>, concurrency: number, queueLimit: number, stats: Statistics) {
         super(next, concurrency, queueLimit, stats);
         this.config = config;
         this.schema = schema;
         this.collection = collection;
+        this.importFileFolder = importFileFolder;
     }
 
     flush(): Promise<Array<ItemWithStatus>> {
@@ -89,7 +115,7 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
                 let newValue, uploadedImages;
                 if (['Image', 'Gallery', 'Document', 'Video', 'Audio'].find(ft => ft === fieldType) !== undefined) {
                     if (fieldType === 'Image')
-                        ({newValue, uploadedImages} = await this.importImage(item.item[key], item.item._id, key))
+                        ({newValue, uploadedImages} = await this.importImage(item.item[camelCase(key)], item.item._id, key))
                         // else if (fieldType === 'Document')
                         //     ({newValue, uploadedImages} = await this.importDocument(item.item[key], item.item._id, key))
                         // else if (fieldType === 'Video')
@@ -98,13 +124,13 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
                     //     ({newValue, uploadedImages} = await this.importAudio(item.item[key], item.item._id, key))
                     else if (fieldType === 'Gallery')
                         ({newValue, uploadedImages} = await this.importGallery(item.item[key], item.item._id, key))
-                    item.item[key] = newValue;
+                    item.item[camelCase(key)] = newValue;
                     totalUploadedImages += uploadedImages;
                 }
             }
         }
 
-        logger.trace(`    upload images for batch ${thisBatchNum} with ${batch.length} items needing image upload. Uploaded Images: ${totalUploadedImages}`)
+        logger.trace(`    uploaded images for batch ${thisBatchNum} with ${batch.length} items. Uploaded Images: ${totalUploadedImages}`)
         this.stats.reportProgress('check update state', batch.length);
     }
 
@@ -113,12 +139,17 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         if (!shouldUpload.shouldUpload)
             return {newValue: shouldUpload.veloUrl, uploadedImages: 0};
 
-        let url = new URL(imageUrl);
-        let fileContent = await getFileContentFromUrl(url);
+        let parsedUrl = parseUrl(imageUrl);
+        let fileContent;
+        if (parsedUrl.isHttp)
+            fileContent = await getFileContentFromHttp(imageUrl);
+        else if (parsedUrl.isFile)
+            fileContent = await this.getFileContentFromFile(parsedUrl.filePath);
 
-        let mimeType = ((await probe(imageUrl)) as ProbeImageSizeResult).mime;
+        let mimeType = ((await probe.sync(fileContent)) as ProbeImageSizeResult).mime;
         let uploadUrl = await getUploadUrl(this.config, 'image', mimeType, _id, this.collection, fieldName)
-        let uploadedImageUrl = await uploadFile(uploadUrl, fileContent, url.pathname, mimeType);
+        let uploadedImageUrl = await uploadFile(uploadUrl, fileContent, parsedUrl.fileName, mimeType);
+        logger.trace(`      uploaded file ${imageUrl}`)
         return {newValue: uploadedImageUrl, uploadedImages: 1}
     }
 
@@ -156,14 +187,15 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         else
             return {shouldUpload: true}
     }
+
+    async getFileContentFromFile(filePath: string) {
+        let fullPath = path.resolve(this.importFileFolder, filePath)
+        return await fs.readFile(fullPath);
+    }
 }
 
-async function getFileContentFromUrl(url: URL) {
-    if (url.protocol === 'file:') {
-        return await fs.readFile(url);
-    }
-    else {
-        let imageResponse = await axios.get(url.toString(), {responseType: 'arraybuffer'});
-        return Buffer.from(imageResponse.data, 'binary')
-    }
+
+async function getFileContentFromHttp(url: string) {
+    let imageResponse = await axios.get(url.toString(), {responseType: 'arraybuffer'});
+    return Buffer.from(imageResponse.data, 'binary')
 }

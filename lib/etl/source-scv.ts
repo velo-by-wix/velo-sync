@@ -11,7 +11,7 @@ export class SCVSourceQueue extends Source<Record<string, any>> {
         super(next, stats);
         this.stream = fs
             .createReadStream(filename)
-            .pipe(csv.parse({headers: true}));
+            .pipe(csv.parse({headers: true, trim: true}));
 
         this.stream.on('data', data => {
             this.stream.pause();

@@ -106,6 +106,6 @@ export async function uploadFile(uploadUrl: UploadUrl, contentStream: Buffer, fi
         }
     };
 
-    const response = await request.post({url: uploadUrl, formData: body, json: true});
+    const response = await request.post({url: uploadUrl.uploadUrl, formData: body, json: true});
     return `wix:image://v1/${response[0].file_name}/${response[0].original_file_name}#originWidth=${response[0].width}&originHeight=${response[0].height}`;
 }
