@@ -66,7 +66,8 @@ export abstract class Transform<T, S> implements Next<T> {
     private async checkIsDone() {
         if (this.noMoreInputs && this.queued + this.startedProcessing === this.completedProcessing) {
             let processResult: S = await this.flush();
-            await this.next.handleItem(processResult);
+            if (processResult !== undefined)
+                await this.next.handleItem(processResult);
             this.markAsDone();
         }
     }
