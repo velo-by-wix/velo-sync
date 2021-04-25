@@ -87,18 +87,20 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
             for (let key of Object.keys(this.schema.fields)) {
                 let fieldType = this.schema.fields[key];
                 let newValue, uploadedImages;
-                if (fieldType === 'Image')
-                    ({newValue, uploadedImages} = await this.importImage(item.item[key], item.item._id, key))
-                // else if (fieldType === 'Document')
-                //     ({newValue, uploadedImages} = await this.importDocument(item.item[key], item.item._id, key))
-                // else if (fieldType === 'Video')
-                //     ({newValue, uploadedImages} = await this.importVideo(item.item[key], item.item._id, key))
-                // else if (fieldType === 'Audio')
-                //     ({newValue, uploadedImages} = await this.importAudio(item.item[key], item.item._id, key))
-                else if (fieldType === 'Gallery')
-                    ({newValue, uploadedImages} = await this.importGallery(item.item[key], item.item._id, key))
-                item.item[key] = newValue;
-                totalUploadedImages += uploadedImages;
+                if (['Image', 'Gallery', 'Document', 'Video', 'Audio'].find(ft => ft === fieldType) !== undefined) {
+                    if (fieldType === 'Image')
+                        ({newValue, uploadedImages} = await this.importImage(item.item[key], item.item._id, key))
+                        // else if (fieldType === 'Document')
+                        //     ({newValue, uploadedImages} = await this.importDocument(item.item[key], item.item._id, key))
+                        // else if (fieldType === 'Video')
+                        //     ({newValue, uploadedImages} = await this.importVideo(item.item[key], item.item._id, key))
+                        // else if (fieldType === 'Audio')
+                    //     ({newValue, uploadedImages} = await this.importAudio(item.item[key], item.item._id, key))
+                    else if (fieldType === 'Gallery')
+                        ({newValue, uploadedImages} = await this.importGallery(item.item[key], item.item._id, key))
+                    item.item[key] = newValue;
+                    totalUploadedImages += uploadedImages;
+                }
             }
         }
 
