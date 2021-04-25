@@ -2,7 +2,6 @@ import {Config} from "../configurations/config";
 import Queue from 'promise-queue';
 import {insertItemBatch} from "../velo/velo-api";
 import logger from '../util/logger';
-import {checkThrottling} from "../throttling";
 
 export class ImportItemQueue {
     private readonly config: Config;
@@ -37,7 +36,6 @@ export class ImportItemQueue {
                 let thisBatchNum = this.batchNum++;
                 let batchSize = batchToInsert.length;
                 this.queuedCount += batchSize;
-                await checkThrottling(1);
                 logger.trace(`  importing batch ${thisBatchNum} with ${batchSize} items`)
                 let ir = await insertItemBatch(this.config, this.collection, batchToInsert);
                 logger.trace(`    imported batch ${thisBatchNum} with ${batchSize} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${ir.errors}`)
