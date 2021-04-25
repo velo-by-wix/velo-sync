@@ -3,6 +3,7 @@ import wixData from 'wix-data';
 import crypto from 'crypto';
 import PromiseQueue from 'promise-queue';
 import wixSecretsBackend from 'wix-secrets-backend';
+import { mediaManager } from 'wix-media-backend';
 
 // URL to call this HTTP function from your published site looks like:
 // Premium site - https://mysite.com/_functions/example/multiply?leftOperand=3&rightOperand=4
@@ -114,7 +115,7 @@ export async function post_clearStale(request) {
 }
 
 export async function post_batchCheckUpdateState(request) {
-  return await logRequest('isAlive', async () => {
+  return await logRequest('batchCheckUpdateState', async () => {
     let data = await validateAndParseRequest(request)
 
     const collection = data.collection;
@@ -145,7 +146,7 @@ export async function post_batchCheckUpdateState(request) {
 }
 
 export async function post_getImageUploadUrl(request) {
-  return await logRequest('isAlive', async () => {
+  return await logRequest('getImageUploadUrl', async () => {
     let data = await validateAndParseRequest(request)
 
     const mimeType = data.mimeTypes;
