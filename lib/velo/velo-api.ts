@@ -46,6 +46,15 @@ export enum ItemStatus {
     ok, needUpdate, notFound
 }
 
+function itemStatusFromString(val: string): ItemStatus {
+    if (val === 'not-found')
+        return ItemStatus.notFound;
+    else if (val === 'need-update')
+        return ItemStatus.needUpdate;
+    else
+        return ItemStatus.ok;
+}
+
 export interface ItemWithStatus {
     item: HasHashAndId
     status: ItemStatus
@@ -53,7 +62,7 @@ export interface ItemWithStatus {
 
 export interface ApiItemStatusResult {
     _id: string
-    status: ItemStatus
+    status: string
 }
 
 export async function checkUpdateState(config: Config, collection: string, items: Array<HasHashAndId>): Promise<Array<ItemWithStatus>> {
@@ -62,12 +71,12 @@ export async function checkUpdateState(config: Config, collection: string, items
         return {_id, _hash};
     })
     let apiResult = await invokeApi(config, 'batchCheckUpdateState', {
-        itemsToSend, collection
+        items: itemsToSend, collection
     }) as Array<ApiItemStatusResult>;
 
     return apiResult.map(itemStatus => {
         let item = items.find(_ => _._id = itemStatus._id)
-        return {status: itemStatus.status, item}
+        return {status: itemStatusFromString(itemStatus.status), item}
     })
 }
 
