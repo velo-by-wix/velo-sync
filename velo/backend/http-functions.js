@@ -92,54 +92,27 @@ export async function post_saveItemBatch(request) {
     return await wixData.bulkSave(collection, items, {suppressAuth: true});
   })
 }
-//
-// export async function post_clearStale(request) {
-//   console.log('clearStale start');
-//   const payload = await request.body.text();
-//   const payloadJson = JSON.parse(payload, dateReviver);
-//   const collection = payloadJson.collection;
-//
-//   const hmac = crypto.createHmac('sha256', secret);
-//   hmac.update(collection);
-//   if (hmac.digest('hex') !== payloadJson.signature) {
-//     return forbidden({body: 'invalid signature'});
-//   }
-//
-//   try {
-//     let date = new Date();
-//     date.setDate(date.getDate() - 3);
-//
-//     console.log('clearStale - query clear stale for', collection);
-//     let res = await wixData.query(collection)
-//       .lt('_updatedDate', date)
-//       .find({suppressAuth: true});
-//     console.log(`clearStale - found ${res.totalCount} items to remove, current page ${res.length}`);
-//     let itemsToDelete = res.items;
-//     let removed = 0;
-//     let errors = 0;
-//     let tasks = [];
-//     for (let i=0; i < itemsToDelete.length; i++) {
-//       tasks.push(async function() {
-//         try {
-//           await wixData.remove(collection, itemsToDelete[i]._id, {suppressAuth: true});
-//           removed++
-//         }
-//         catch (e) {
-//           console.log(`clearStale - delete item - error`, e.stack);
-//           errors++
-//         }
-//       });
-//     }
-//     await Queue(10, tasks);
-//
-//     return ok({body: {itemsRemoved: removed, staleItems: res.totalCount - removed, errors: errors}});
-//   }
-//   catch (e) {
-//     console.log(`clearStale - error`, e.stack);
-//     return ok({body: e.stack});
-//   }
-// }
-//
+
+export async function post_clearStale(request) {
+  return await logRequest('clearStale', async () => {
+    let data = await validateAndParseRequest(request)
+    let collection = data.collection;
+
+    let date = new Date();
+    date.setDate(date.getDate() - 3);
+
+    let res = await wixData.query(collection)
+      .lt('_updatedDate', date)
+      .find({suppressAuth: true});
+    console.log(`clearStale - found ${res.totalCount} items to remove, current page ${res.length}`);
+    let itemsToDelete = res.items;
+    let ids = itemsToDelete.map(_ => _._id);
+    let removeResult = await wixData.bulkRemove(collection, ids, {suppressAuth: true});
+
+    return {itemsRemoved: removeResult.removed, staleItems: res.totalCount - removeResult.removed, errors: removeResult.errors};
+  })
+}
+
 export async function post_batchCheckUpdateState(request) {
   return await logRequest('isAlive', async () => {
     let data = await validateAndParseRequest(request)

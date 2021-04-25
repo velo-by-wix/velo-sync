@@ -1,7 +1,7 @@
 import optimist from 'optimist';
 import initTask from './tasks/init-task';
 import isAliveTask from "./tasks/is-alive-task";
-import importTask from "./tasks/import-task";
+import syncTask from "./tasks/sync-task";
 
 if (process.argv.length < 3) {
   printUsage();
@@ -17,7 +17,24 @@ else if (command === 'is-alive') {
   isAliveTask();
 }
 else if (command === 'sync') {
-  // runSync();
+  let argv = optimist
+      .usage('Usage: $0 sync -f <scv filename> -c <collection>')
+      .demand(  'f')
+      .alias(   'f', 'filename')
+      .describe('f', 'csv filename to import')
+      .demand(  'c')
+      .describe('c', 'the name of the collection to import into')
+      .alias(   'c', 'collection')
+      .demand(  's')
+      .describe('s', 'schema file describing the fields of the collection')
+      .alias(   's', 'schema')
+      .parse(process.argv.slice(3));
+
+  let filename = argv.filename;
+  let collection = argv.collection;
+  let schema = argv.schema;
+
+  syncTask(filename, collection, schema, false);
 }
 else if (command === 'import') {
   let argv = optimist
@@ -37,7 +54,7 @@ else if (command === 'import') {
   let collection = argv.collection;
   let schema = argv.schema;
 
-  importTask(filename, collection, schema);
+  syncTask(filename, collection, schema, true);
 }
 else if (command === 'export') {
   // runExport();

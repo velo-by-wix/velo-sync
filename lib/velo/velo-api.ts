@@ -12,6 +12,12 @@ export interface WixDataBulkResult {
     updatedItemIds: Array<string>   // List of IDs of updated items.
 }
 
+export interface RemoveStaleResult {
+    itemsRemoved: number,
+    staleItems: number,
+    errors: number
+}
+
 export async function isAlive(config: Config) {
     let res = await invokeApi(config, 'isAlive', {isAlive: '?'});
     if (res !== 'ok')
@@ -27,6 +33,12 @@ export async function insertItemBatch(config: Config, collection: string, items:
 export async function saveItemBatch(config: Config, collection: string, items: Array<any>): Promise<WixDataBulkResult> {
     return await invokeApi(config, 'saveItemBatch', {
         items, collection
+    });
+}
+
+export async function removeStaleItems(config: Config, collection: string): Promise<RemoveStaleResult> {
+    return await invokeApi(config, 'clearStale', {
+        collection
     });
 }
 

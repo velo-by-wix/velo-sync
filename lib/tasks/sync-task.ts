@@ -11,11 +11,12 @@ import {readSchema} from "../configurations/schema";
 import {TransformCheckUpdate} from "../etl/transform-check-update";
 import {TransformImportFiles} from "../etl/transform-import-files";
 import {TransformSave} from "../etl/transform-save";
+import {removeStaleItems} from "../velo/velo-api";
 
-export default async function importTask(filename: string, collection: string, schemaFilename: string) {
+export default async function syncTask(filename: string, collection: string, schemaFilename: string, importOnly: boolean) {
     try {
         logger.strong(`starting import ${filename} to ${collection}`);
-        await runImport(filename, collection, schemaFilename);
+        await runImport(filename, collection, schemaFilename, importOnly);
         logger.strong(`completed importing ${filename} to ${collection}`);
     }
     catch (e) {
@@ -23,7 +24,7 @@ export default async function importTask(filename: string, collection: string, s
     }
 }
 
-function runImport(filename: string, collection: string, schemaFilename: string) {
+function runImport(filename: string, collection: string, schemaFilename: string, importOnly: boolean) {
     return new Promise<void>(async resolve => {
 
         let stats = new LoggingStatistics();
@@ -42,7 +43,17 @@ function runImport(filename: string, collection: string, schemaFilename: string)
         await batch.done();
         await checkUpdate.done();
         stats.print();
-        // logger.log(`read ${readItems} items, saved ${savedItems} items`);
+
+        if (!importOnly) {
+            let pendingItems = 0;
+            do {
+                let clearStaleResult = await removeStaleItems(config, collection);
+                pendingItems = clearStaleResult.staleItems;
+                logger.trace(`clearing stale items. removed: ${clearStaleResult.itemsRemoved}, stale: ${clearStaleResult.staleItems}`)
+                stats.reportProgress('remove stale items', clearStaleResult.itemsRemoved);
+            }
+            while (pendingItems > 0)
+        }
         resolve();
     })
 }
