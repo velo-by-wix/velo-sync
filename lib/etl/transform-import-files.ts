@@ -147,9 +147,10 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
             fileContent = await this.getFileContentFromFile(parsedUrl.filePath);
 
         let mimeType = ((await probe.sync(fileContent)) as ProbeImageSizeResult).mime;
+        logger.trace(`      uploading file ${imageUrl}`)
         let uploadUrl = await getUploadUrl(this.config, 'image', mimeType, _id, this.collection, fieldName)
         let uploadedImageUrl = await uploadFile(uploadUrl, fileContent, parsedUrl.fileName, mimeType);
-        logger.trace(`      uploaded file ${imageUrl}`)
+        this.stats.reportProgress('upload images', 1);
         return {newValue: uploadedImageUrl, uploadedImages: 1}
     }
 
@@ -166,15 +167,19 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
     // }
 
     async importGallery(gallery: any, _id: string, fieldName: string): Promise<UploadResult> {
+        let galleryUploadedImages = 0;
         if (Array.isArray(gallery)) {
             for (let galleryItem of gallery) {
-                if (galleryItem.type === 'image')
-                    galleryItem.url = await this.importImage(galleryItem.url, _id, fieldName);
+                if (galleryItem.type === 'image') {
+                    let {newValue, uploadedImages} = await this.importImage(galleryItem.src, _id, fieldName);
+                    galleryItem.src = newValue;
+                    galleryUploadedImages += uploadedImages;
+                }
                 // else if (galleryItem.type === 'video')
                 //     galleryItem.url = await this.importVideo(galleryItem.url, _id, fieldName);
             }
         }
-        return gallery;
+        return {newValue: gallery, uploadedImages: galleryUploadedImages};
     }
 
     async checkNeedUpload(fileUrl: string): Promise<{shouldUpload: boolean, veloUrl?: string}> {

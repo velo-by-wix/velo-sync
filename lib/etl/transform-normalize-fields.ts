@@ -94,7 +94,7 @@ function parseGallery(val: string) {
     catch (e) {
         return val.split(',').map(url => {
             return {
-                url,
+                src: url,
                 type: isImage(url)?'image':'video'
             }
         })
