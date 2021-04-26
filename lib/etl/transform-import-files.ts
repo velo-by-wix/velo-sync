@@ -11,6 +11,7 @@ import probe from 'probe-image-size';
 import axios from "axios";
 import path from 'path';
 import {camelCase} from 'change-case';
+import * as crypto from 'crypto';
 
 
 interface ProbeImageSizeResult {
@@ -60,6 +61,21 @@ async function toVeloUrl(staticUrl: string) {
     return staticUrl;
 }
 
+export interface FileUploadCache {
+    setVeloFileUrl(fileUrlOrPath: string, hash: string, veloFileUrl: string): Promise<void>;
+    getVeloFileUrl(fileUrlOrPath: string, hash: string): Promise<string>;
+}
+
+export class NoopFileUploadCache implements FileUploadCache {
+    getVeloFileUrl(fileUrlOrPath: string, hash: string): Promise<string> {
+        return Promise.resolve(undefined);
+    }
+
+    setVeloFileUrl(fileUrlOrPath: string, hash: string, veloFileUrl: string): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+}
+
 const isFileProtocol = /file:/i;
 const isHttpProtocol = /http(s)?:/i;
 interface ParseUrlResult {
@@ -68,16 +84,16 @@ interface ParseUrlResult {
     isHttp?: boolean,
     fileName?: string
 }
-function parseUrl(imageUrl: string): ParseUrlResult {
+function parseUrl(fileUrlOrPath: string): ParseUrlResult {
     try {
-        let url = new URL(imageUrl);
+        let url = new URL(fileUrlOrPath);
         if (url.protocol.match(isFileProtocol))
             return {isFile: true, filePath: url.pathname, fileName: path.basename(url.pathname)}
         else if (url.protocol.match(isHttpProtocol))
             return {isHttp: true, fileName: path.basename(url.pathname)}
     }
     catch (e) {
-        return {isFile: true, filePath: imageUrl, fileName: path.basename(imageUrl)}
+        return {isFile: true, filePath: fileUrlOrPath, fileName: path.basename(fileUrlOrPath)}
     }
 }
 
@@ -87,12 +103,16 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
     private readonly collection: string;
     private readonly importFileFolder: string;
     private batchNum: number = 0;
-    constructor(config: Config, schema: Schema, importFileFolder: string, collection: string, next: Next<Array<ItemWithStatus>>, concurrency: number, queueLimit: number, stats: Statistics) {
+    private readonly fileUploadCache: FileUploadCache;
+    constructor(config: Config, schema: Schema, importFileFolder: string, collection: string, next: Next<Array<ItemWithStatus>>,
+                fileUploadCache: FileUploadCache,
+                concurrency: number, queueLimit: number, stats: Statistics) {
         super(next, concurrency, queueLimit, stats);
         this.config = config;
         this.schema = schema;
         this.collection = collection;
         this.importFileFolder = importFileFolder;
+        this.fileUploadCache = fileUploadCache;
     }
 
     flush(): Promise<Array<ItemWithStatus>> {
@@ -139,22 +159,39 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         if (!shouldUpload.shouldUpload)
             return {newValue: shouldUpload.veloUrl, uploadedImages: 0};
 
-        let parsedUrl = parseUrl(imageUrl);
-        let fileContent;
-        if (parsedUrl.isHttp)
-            fileContent = await getFileContentFromHttp(imageUrl);
-        else if (parsedUrl.isFile)
-            fileContent = await this.getFileContentFromFile(parsedUrl.filePath);
-
+        let {parsedUrl, fileContent} = await this.getFileContent(imageUrl);
         let mimeType = ((await probe.sync(fileContent)) as ProbeImageSizeResult).mime;
-        logger.trace(`      uploading file ${imageUrl}`)
-        let uploadUrl = await getUploadUrl(this.config, 'image', mimeType, _id, this.collection, fieldName)
-        let uploadedImageUrl = await uploadFile(uploadUrl, fileContent, parsedUrl.fileName, mimeType);
-        this.stats.reportProgress('upload images', 1);
-        return {newValue: uploadedImageUrl, uploadedImages: 1}
+        let uploadResult = await this.uploadFile(imageUrl, mimeType, _id, fieldName, fileContent, parsedUrl.fileName);
+
+        this.stats.reportProgress('upload images', uploadResult.uploadedImages);
+        return uploadResult
     }
 
-    // async importDocument(documentUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
+    private async uploadFile(fileUrlOrPath: string, mimeType: string, _id: string, fieldName: string, fileContent: Buffer, fileName: string): Promise<UploadResult> {
+        let hash = md5(fileContent);
+        let veloFileUrl = await this.fileUploadCache.getVeloFileUrl(fileUrlOrPath, hash);
+        let uploadedImages = 0;
+        if (!veloFileUrl) {
+            logger.trace(`      uploading file ${fileUrlOrPath}`)
+            let uploadUrl = await getUploadUrl(this.config, 'image', mimeType, _id, this.collection, fieldName)
+            veloFileUrl = await uploadFile(uploadUrl, fileContent, fileName, mimeType);
+            await this.fileUploadCache.setVeloFileUrl(fileUrlOrPath, hash, veloFileUrl);
+            uploadedImages = 1;
+        }
+        return {newValue: veloFileUrl, uploadedImages};
+    }
+
+    private async getFileContent(fileUrlOrPath: string) {
+        let parsedUrl = parseUrl(fileUrlOrPath);
+        let fileContent;
+        if (parsedUrl.isHttp)
+            fileContent = await getFileContentFromHttp(fileUrlOrPath);
+        else if (parsedUrl.isFile)
+            fileContent = await this.getFileContentFromFile(parsedUrl.filePath);
+        return {parsedUrl, fileContent};
+    }
+
+// async importDocument(documentUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
     //
     // }
     //
@@ -203,4 +240,8 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
 async function getFileContentFromHttp(url: string) {
     let imageResponse = await axios.get(url.toString(), {responseType: 'arraybuffer'});
     return Buffer.from(imageResponse.data, 'binary')
+}
+
+function md5(data: Buffer) {
+    return crypto.createHash('md5').update(data).digest('hex');
 }
