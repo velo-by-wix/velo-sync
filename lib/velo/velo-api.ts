@@ -94,7 +94,7 @@ export async function getUploadUrl(config: Config, mediaType: string, mimeType: 
     })
 }
 
-export async function uploadFile(uploadUrl: UploadUrl, contentStream: Buffer, fileName: string, contentType: string) {
+export async function uploadFile(uploadUrl: UploadUrl, contentStream: Buffer, fileName: string, mediaType: string, contentType: string) {
     const body = {
         upload_token: uploadUrl.uploadToken,
         file: {
@@ -107,5 +107,14 @@ export async function uploadFile(uploadUrl: UploadUrl, contentStream: Buffer, fi
     };
 
     const response = await request.post({url: uploadUrl.uploadUrl, formData: body, json: true});
-    return `wix:image://v1/${response[0].file_name}/${response[0].original_file_name}#originWidth=${response[0].width}&originHeight=${response[0].height}`;
+    if (mediaType === 'image')
+        return `wix:image://v1/${response[0].file_name}/${response[0].original_file_name}#originWidth=${response[0].width}&originHeight=${response[0].height}`;
+    else if (mediaType === 'video') {
+        let uploadedVideo = response[0];
+        let poster = uploadedVideo?.file_output?.image[0];
+        let posterUrl = poster.url.replace('media/', '');
+        return `wix:video://v1/${uploadedVideo.file_name}/${uploadedVideo.original_file_name}#posterUri=${posterUrl}&posterWidth=${poster.width}&posterHeight=${poster.height}`;
+    }
+    else
+        throw new Error('unsupported media type')
 }

@@ -138,8 +138,8 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
                         ({newValue, uploadedImages} = await this.importImage(item.item[camelCase(key)], item.item._id, key))
                         // else if (fieldType === 'Document')
                         //     ({newValue, uploadedImages} = await this.importDocument(item.item[key], item.item._id, key))
-                        // else if (fieldType === 'Video')
-                        //     ({newValue, uploadedImages} = await this.importVideo(item.item[key], item.item._id, key))
+                    else if (fieldType === 'Video')
+                        ({newValue, uploadedImages} = await this.importVideo(item.item[key], item.item._id, key))
                         // else if (fieldType === 'Audio')
                     //     ({newValue, uploadedImages} = await this.importAudio(item.item[key], item.item._id, key))
                     else if (fieldType === 'Gallery')
@@ -161,20 +161,20 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
 
         let {parsedUrl, fileContent} = await this.getFileContent(imageUrl);
         let mimeType = ((await probe.sync(fileContent)) as ProbeImageSizeResult).mime;
-        let uploadResult = await this.uploadFile(imageUrl, mimeType, _id, fieldName, fileContent, parsedUrl.fileName);
+        let uploadResult = await this.uploadFile(imageUrl, 'image', mimeType, _id, fieldName, fileContent, parsedUrl.fileName);
 
         this.stats.reportProgress('upload images', uploadResult.uploadedImages);
         return uploadResult
     }
 
-    private async uploadFile(fileUrlOrPath: string, mimeType: string, _id: string, fieldName: string, fileContent: Buffer, fileName: string): Promise<UploadResult> {
+    private async uploadFile(fileUrlOrPath: string, mediaType: string, mimeType: string, _id: string, fieldName: string, fileContent: Buffer, fileName: string): Promise<UploadResult> {
         let hash = md5(fileContent);
         let veloFileUrl = await this.fileUploadCache.getVeloFileUrl(fileUrlOrPath, hash);
         let uploadedImages = 0;
         if (!veloFileUrl) {
             logger.trace(`      uploading file ${fileUrlOrPath}`)
-            let uploadUrl = await getUploadUrl(this.config, 'image', mimeType, _id, this.collection, fieldName)
-            veloFileUrl = await uploadFile(uploadUrl, fileContent, fileName, mimeType);
+            let uploadUrl = await getUploadUrl(this.config, mediaType, mimeType, _id, this.collection, fieldName)
+            veloFileUrl = await uploadFile(uploadUrl, fileContent, fileName, mediaType, mimeType);
             await this.fileUploadCache.setVeloFileUrl(fileUrlOrPath, hash, veloFileUrl);
             uploadedImages = 1;
         }
@@ -195,10 +195,18 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
     //
     // }
     //
-    // async importVideo(videoUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
-    //
-    // }
-    //
+    async importVideo(videoUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
+        let shouldUpload = await this.checkNeedUpload(videoUrl);
+        if (!shouldUpload.shouldUpload)
+            return {newValue: shouldUpload.veloUrl, uploadedImages: 0};
+
+        let {parsedUrl, fileContent} = await this.getFileContent(videoUrl);
+        let uploadResult = await this.uploadFile(videoUrl, 'video', undefined, _id, fieldName, fileContent, parsedUrl.fileName);
+
+        this.stats.reportProgress('upload video', uploadResult.uploadedImages);
+        return uploadResult
+    }
+
     // async importAudio(audioUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
     //
     // }
