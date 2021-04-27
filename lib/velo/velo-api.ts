@@ -115,6 +115,14 @@ export async function uploadFile(uploadUrl: UploadUrl, contentStream: Buffer, fi
         let posterUrl = poster.url.replace('media/', '');
         return `wix:video://v1/${uploadedVideo.file_name}/${uploadedVideo.original_file_name}#posterUri=${posterUrl}&posterWidth=${poster.width}&posterHeight=${poster.height}`;
     }
+    else if (mediaType === 'audio') {
+        let uploadedAudio = response[0];
+        let duration = uploadedAudio?.file_input?.duration;
+        return `wix:audio://v1/${uploadedAudio.file_name}/${uploadedAudio.original_file_name}#duration=${Math.round(duration/1000)}`
+    }
+    else if (mediaType === 'document') {
+        return `wix:document://v1/${response[0].file_name}/${response[0].original_file_name}`
+    }
     else
         throw new Error('unsupported media type')
 }
