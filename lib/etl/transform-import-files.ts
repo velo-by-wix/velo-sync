@@ -150,7 +150,7 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         this.stats.reportProgress('check update state', batch.length);
     }
 
-    async importImage(imageUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
+    private async importImage(imageUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
         let shouldUpload = await this.checkNeedUpload(imageUrl);
         if (!shouldUpload.shouldUpload)
             return {newValue: shouldUpload.veloUrl, uploadedImages: 0};
@@ -161,6 +161,37 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
 
         this.stats.reportProgress('upload images', uploadResult.uploadedImages);
         return uploadResult
+    }
+
+    private async importFile(mediaType: string, videoUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
+        let shouldUpload = await this.checkNeedUpload(videoUrl);
+        if (!shouldUpload.shouldUpload)
+            return {newValue: shouldUpload.veloUrl, uploadedImages: 0};
+
+        let {parsedUrl, fileContent} = await this.getFileContent(videoUrl);
+        let uploadResult = await this.uploadFile(videoUrl, mediaType, undefined, _id, fieldName, fileContent, parsedUrl.fileName);
+
+        this.stats.reportProgress('upload ' + mediaType, uploadResult.uploadedImages);
+        return uploadResult
+    }
+
+    private async importGallery(gallery: any, _id: string, fieldName: string): Promise<UploadResult> {
+        let galleryUploadedImages = 0;
+        if (Array.isArray(gallery)) {
+            for (let galleryItem of gallery) {
+                if (galleryItem.type === 'image') {
+                    let {newValue, uploadedImages} = await this.importImage(galleryItem.src, _id, fieldName);
+                    galleryItem.src = newValue;
+                    galleryUploadedImages += uploadedImages;
+                }
+                else if (galleryItem.type === 'video') {
+                    let {newValue, uploadedImages} = await this.importFile('video', galleryItem.src, _id, fieldName);
+                    galleryItem.src = newValue;
+                    galleryUploadedImages += uploadedImages;
+                }
+            }
+        }
+        return {newValue: gallery, uploadedImages: galleryUploadedImages};
     }
 
     private async uploadFile(fileUrlOrPath: string, mediaType: string, mimeType: string, _id: string, fieldName: string, fileContent: Buffer, fileName: string): Promise<UploadResult> {
@@ -187,43 +218,7 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         return {parsedUrl, fileContent};
     }
 
-// async importDocument(documentUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
-    //
-    // }
-    //
-    async importFile(mediaType: string, videoUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
-        let shouldUpload = await this.checkNeedUpload(videoUrl);
-        if (!shouldUpload.shouldUpload)
-            return {newValue: shouldUpload.veloUrl, uploadedImages: 0};
-
-        let {parsedUrl, fileContent} = await this.getFileContent(videoUrl);
-        let uploadResult = await this.uploadFile(videoUrl, mediaType, undefined, _id, fieldName, fileContent, parsedUrl.fileName);
-
-        this.stats.reportProgress('upload ' + mediaType, uploadResult.uploadedImages);
-        return uploadResult
-    }
-
-    // async importAudio(audioUrl: string, _id: string, fieldName: string): Promise<UploadResult> {
-    //
-    // }
-
-    async importGallery(gallery: any, _id: string, fieldName: string): Promise<UploadResult> {
-        let galleryUploadedImages = 0;
-        if (Array.isArray(gallery)) {
-            for (let galleryItem of gallery) {
-                if (galleryItem.type === 'image') {
-                    let {newValue, uploadedImages} = await this.importImage(galleryItem.src, _id, fieldName);
-                    galleryItem.src = newValue;
-                    galleryUploadedImages += uploadedImages;
-                }
-                // else if (galleryItem.type === 'video')
-                //     galleryItem.url = await this.importVideo(galleryItem.url, _id, fieldName);
-            }
-        }
-        return {newValue: gallery, uploadedImages: galleryUploadedImages};
-    }
-
-    async checkNeedUpload(fileUrl: string): Promise<{shouldUpload: boolean, veloUrl?: string}> {
+    private async checkNeedUpload(fileUrl: string): Promise<{shouldUpload: boolean, veloUrl?: string}> {
         if (isVeloUrl(fileUrl))
             return {shouldUpload: false, veloUrl: fileUrl};
         else if (isStoredOnWixStatics(fileUrl)) {
@@ -234,7 +229,7 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
             return {shouldUpload: true}
     }
 
-    async getFileContentFromFile(filePath: string) {
+    private async getFileContentFromFile(filePath: string) {
         let fullPath = path.resolve(this.importFileFolder, filePath)
         return await fs.readFile(fullPath);
     }
