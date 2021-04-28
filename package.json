@@ -1,14 +1,18 @@
 {
   "name": "wix-sync",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.1",
+  "description": "Data sync tool for Wix Data / Content Manager Sites",
   "main": "./dist/index",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "sync": "./bin/wix-sync.js"
+  },
   "scripts": {
     "build": "tsc",
     "prepublish": "tsc"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "axios": "^0.21.1",
     "chalk": "^2.4.1",

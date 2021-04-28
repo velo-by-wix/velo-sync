@@ -42,7 +42,8 @@ export class TransformNormalizeFields extends Transform<HasHash, HasHashAndId> {
     }
 
     normalize(item: HasHash): HasHashAndId {
-        item._id = ''+item[this.schema.keyField];
+        if (this.schema.keyField)
+            item._id = ''+item[this.schema.keyField];
         Object.keys(this.schema.fields).forEach(key => {
             try {
                 switch (this.schema.fields[key]) {

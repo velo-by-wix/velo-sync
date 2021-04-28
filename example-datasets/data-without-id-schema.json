@@ -1,0 +1,11 @@
+{
+  "fields": {
+    "garden": "number",
+    "built": "number",
+    "space": "number",
+    "rooms": "number",
+    "price": "string",
+    "street": "string",
+    "status": "string"
+  }
+}

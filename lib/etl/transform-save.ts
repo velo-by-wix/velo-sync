@@ -36,7 +36,7 @@ export class TransformSave extends Transform<Array<ItemWithStatus>, Array<ItemWi
         else {
             logger.trace(`  saving batch ${thisBatchNum} with ${batch.length} items`)
             let ir = await saveItemBatch(this.config, this.collection, batch);
-            logger.trace(`    saving batch ${thisBatchNum} with ${batch.length} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${ir.errors}`)
+            logger.trace(`    saving batch ${thisBatchNum} with ${batch.length} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${JSON.stringify(ir.errors)}`)
         }
         this.stats.reportProgress('update', batch.length);
     }
