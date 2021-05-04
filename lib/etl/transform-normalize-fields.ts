@@ -86,9 +86,11 @@ function parseNumber(val: string, key: string): number {
     return num;
 }
 
-function parseBoolean(val: string, key: string): boolean {
+function parseBoolean(val: string | boolean, key: string): boolean {
     if (val === "")
         return undefined;
+    if (typeof val === 'boolean')
+        return val;
     if (val.match(parseYes))
         return true
     else if (val.match(parseNo))
@@ -97,9 +99,11 @@ function parseBoolean(val: string, key: string): boolean {
         throw new Error(`Failed to parse field ${key} - "${val}" is not a boolean`);
 }
 
-function parseJson(val: string, key: string): any {
+function parseJson(val: string | object, key: string): any {
     if (val === "")
         return undefined;
+    if (typeof val === 'object')
+        return val;
     try {
         return JSON.parse(val)
     }
@@ -108,18 +112,22 @@ function parseJson(val: string, key: string): any {
     }
 }
 
-function parseDate(val: string, key: string): Date {
+function parseDate(val: string | Date, key: string): Date {
     if (val === "")
         return undefined;
+    if (val instanceof Date)
+        return val;
     let d = new Date(val);
     if (isNaN(d.getTime()))
         throw new Error(`Failed to parse field ${key} - "${val}" is not a valid Datetime`);
     return d;
 }
 
-function parseGallery(val: string) {
+function parseGallery(val: string | object) {
     if (val === "")
         return undefined;
+    if (typeof val === 'object')
+        return val;
     try {
         return JSON.parse(val)
     }
