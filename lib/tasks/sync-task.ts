@@ -10,9 +10,9 @@ import {LoggerRejectsReporter} from "../util/rejects-reporter";
 
 export default async function syncTask(filename: string, collection: string, schemaFilename: string, importOnly: boolean) {
     try {
-        logger.strong(`starting import ${filename} to ${collection}`);
+        logger.strongGreen(`starting import ${filename} to ${collection}`);
         await runImport(filename, collection, schemaFilename, importOnly);
-        logger.strong(`completed importing ${filename} to ${collection}`);
+        logger.strongGreen(`completed importing ${filename} to ${collection}`);
     }
     catch (e) {
         logger.error(`failed importing ${filename} to ${collection} with ${e}`)
@@ -35,6 +35,7 @@ function runImport(filename: string, collection: string, schemaFilename: string,
         stats.print();
 
         if (!importOnly) {
+            logger.log(`starting to clear stale items`);
             let pendingItems = 0;
             do {
                 let clearStaleResult = await removeStaleItems(config, collection);
@@ -43,6 +44,7 @@ function runImport(filename: string, collection: string, schemaFilename: string,
                 stats.reportProgress('remove stale items', clearStaleResult.itemsRemoved);
             }
             while (pendingItems > 0)
+            logger.log(`completed clearing stale items`);
         }
         resolve();
     })

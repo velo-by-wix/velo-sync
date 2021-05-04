@@ -131,7 +131,7 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
                   
     async uploadFiles(batch: Array<ItemWithStatus>): Promise<Array<ItemWithStatus>> {
         let thisBatchNum = this.batchNum++;
-        logger.trace(`  upload images for batch ${thisBatchNum} with ${batch.length} items needing image upload`)
+        logger.log(`  upload images for batch ${thisBatchNum} with ${batch.length} items needing image upload`)
 
         let uploadStats = {uploads: 0};
         let uploadedItems: Array<TryOp<ItemWithStatus, ItemWithStatus>> = await forEach(batch, item => {

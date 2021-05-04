@@ -23,21 +23,6 @@ function formatTime(timeMillis) {
   return `${hours}:${minutes}:${seconds}`;
 }
 
-let auditWriteStream;
-function openAuditLog(filename) {
-  const stream = createWriteStream(filename);
-  auditWriteStream = new PromiseWritable(stream);
-}
-
-async function closeAuditLog() {
-  await auditWriteStream.end();
-}
-
-async function auditLog(text) {
-  if (auditWriteStream)
-    await auditWriteStream.write(text + '\n');
-}
-
 function dump(arg) {
   console.log(inspect(arg, {colors:true, depth: 5}));
 }
@@ -48,12 +33,8 @@ const logger = {
   warn: logMaker(chalk.yellow),
   trace: logMaker(chalk.gray),
   strong: logMaker(chalk.whiteBright),
-  yellow: logMaker(chalk.yellow),
   strongGreen: logMaker(chalk.greenBright),
   formatTime: formatTime,
-  auditLog: auditLog,
-  openAuditLog: openAuditLog,
-  closeAuditLog: closeAuditLog,
   dump: dump
 };
 

@@ -27,7 +27,7 @@ export class LoggingStatistics implements Statistics {
     }
 
     print() {
-        logger.log('statistics');
+        logger.strong('statistics');
         Object.keys(this.stats).forEach(key =>
             logger.log(`  ${key}: ${this.stats[key]}`)
         )

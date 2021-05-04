@@ -27,7 +27,7 @@ export class TransformCheckUpdate extends Transform<Array<HasHashAndId>, Array<I
 
     async checkUpdateState(batch: Array<HasHashAndId>): Promise<Array<ItemWithStatus>> {
         let thisBatchNum = this.batchNum++;
-        logger.trace(`  check update state batch ${thisBatchNum} with ${batch.length} items`)
+        logger.log(`  check update state batch ${thisBatchNum} with ${batch.length} items`)
         let batchHasId = batch.filter(_ => !!_._id);
         let batchNoId = batch.filter(_ => !_._id);
         let itemStatusesHasId = batchHasId.length > 0?

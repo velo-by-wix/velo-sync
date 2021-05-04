@@ -26,7 +26,7 @@ export class InsertData extends Transform<Array<any>, any> {
 
     async insertBatch(batch: Array<any>): Promise<any> {
         let thisBatchNum = this.batchNum++;
-        logger.trace(`  importing batch ${thisBatchNum} with ${batch.length} items`)
+        logger.log(`  importing batch ${thisBatchNum} with ${batch.length} items`)
         let ir = await insertItemBatch(this.config, this.collection, batch);
         logger.trace(`    imported batch ${thisBatchNum} with ${batch.length} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${ir.errors}`)
         this.stats.reportProgress('insert', batch.length);
