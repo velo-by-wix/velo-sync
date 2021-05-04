@@ -114,3 +114,13 @@ For media and files, the upload process supports 4 different formats of file ref
 * wix statics url - public url of a file already stored on wix - the file will not be uploaded again, and will be replaced with a wix url
 * wix url (`wix:image`, etc.) - the file will not be uploaded as it is already on wix.
 
+## prepare your site
+
+To enable velo sync on a velo site, one need to copy the [http-functions.js](./velo/backend/http-functions.js) into the backend folder in velo.
+Then, a secret should be defined in Secrets Manager (under Settings / Secrets Manager) and define a secret with the name `velo-sync`.
+
+1. copy the [http-functions.js](./velo/backend/http-functions.js) to the velo backend folder
+2. define a secret `velo-sync` in secret manager
+
+## prepare the application
+

@@ -1,12 +1,13 @@
 {
-  "name": "wix-sync",
+  "name": "velo-sync",
   "version": "0.0.1",
   "description": "Data sync tool for Wix Data / Content Manager Sites",
   "main": "./dist/index",
   "types": "./dist/index.d.ts",
   "bin": {
-    "sync": "./bin/wix-sync.js"
+    "velo-sync": "./bin/velo-sync.js"
   },
+  "files": ["bin", "dist", "velo", "LICENSE", "README.md"],
   "engines": {
     "node": ">=0.12.10"
   },
