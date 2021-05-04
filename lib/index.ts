@@ -49,7 +49,7 @@ export function createDataSync(collection: string, config: Config, schema: Schem
     let importImages = new TransformImportFiles(config, schema, importFileFolder, collection, updateItems, fileUploadCache, 5, 10, stats, rejectsReporter);
     let checkUpdate = new TransformCheckUpdate(config, collection, importImages, 5, 10, stats);
     let batch = new TransformBatch<HasHashAndId>(checkUpdate, 10, stats, 50);
-    let normalize = new TransformNormalizeFields(batch, 10, stats, schema);
+    let normalize = new TransformNormalizeFields(batch, 10, stats, schema, rejectsReporter);
     let hash = new TransformComputeHash(normalize, 10, stats, schema);
 
     return new DataSyncImpl(hash, updateItems);

@@ -6,6 +6,10 @@ import * as path from "path";
 import {Schema} from "../configurations/schema";
 import {HasHash} from "./transform-compute-hash";
 import {camelCase} from 'change-case';
+import {RejectsReporter} from "../util/rejects-reporter";
+import {Failure, Success, tryProcessItem} from "../util/try";
+import {monitorEventLoopDelay} from "perf_hooks";
+import {ItemWithStatus} from "../velo/velo-api";
 export interface HasHashAndId extends HasHash {
     _id: string
 }
@@ -26,10 +30,12 @@ export interface HasHashAndId extends HasHash {
  */
 export class TransformNormalizeFields extends Transform<HasHash, HasHashAndId> {
     private schema: Schema;
+    private rejectsReporter: RejectsReporter;
 
-    constructor(next: Next<object>, queueLimit: number, stats: Statistics, schema: Schema) {
+    constructor(next: Next<object>, queueLimit: number, stats: Statistics, schema: Schema, rejectsReporter: RejectsReporter) {
         super(next, 1, queueLimit, stats);
         this.schema = schema;
+        this.rejectsReporter = rejectsReporter;
     }
 
 
@@ -38,22 +44,22 @@ export class TransformNormalizeFields extends Transform<HasHash, HasHashAndId> {
     }
 
     process(item: HasHash): Promise<HasHashAndId> {
-        return Promise.resolve(this.normalize(item));
+        return this.normalize(item);
     }
 
-    normalize(item: HasHash): HasHashAndId {
-        if (this.schema.keyField)
-            item._id = ''+item[this.schema.keyField];
-        Object.keys(this.schema.fields).forEach(key => {
-            try {
+    async normalize(item: HasHash): Promise<HasHashAndId> {
+        let processedItem = await tryProcessItem(item, item => {
+            if (this.schema.keyField)
+                item._id = ''+item[this.schema.keyField];
+            Object.keys(this.schema.fields).forEach(key => {
                 switch (this.schema.fields[key]) {
-                    case 'number': item[key] = Number(item[key]); break;
-                    case 'boolean': item[key] = parseBoolean(item[key]); break;
-                    case 'Datetime': item[key] = parseDate(item[key]); break;
-                    case 'Array': item[key] = parseJson(item[key]); break;
-                    case 'Object': item[key] = parseJson(item[key]); break;
-                    case 'Address': item[key] = parseJson(item[key]); break;
-                    case 'Tags': item[key] = parseJson(item[key]); break;
+                    case 'number': item[key] = parseNumber(item[key], key); break;
+                    case 'boolean': item[key] = parseBoolean(item[key], key); break;
+                    case 'Datetime': item[key] = parseDate(item[key], key); break;
+                    case 'Array': item[key] = parseJson(item[key], key); break;
+                    case 'Object': item[key] = parseJson(item[key], key); break;
+                    case 'Address': item[key] = parseJson(item[key], key); break;
+                    case 'Tags': item[key] = parseJson(item[key], key); break;
                     case 'Gallery': item[key] = parseGallery(item[key]); break;
                 }
                 let normalizedKey = camelCase(key);
@@ -62,33 +68,61 @@ export class TransformNormalizeFields extends Transform<HasHash, HasHashAndId> {
                     delete item[key];
                     item[normalizedKey] = val;
                 }
-            }
-            catch (e) {}
-        });
-        return item as HasHashAndId;
+            });
+            return Promise.resolve(item as HasHashAndId);
+        })
+        if (!processedItem.isOk()) {
+            let failure = processedItem as Failure<ItemWithStatus>;
+            this.rejectsReporter.reject(failure.item, failure.error);
+        }
+        else
+            return (processedItem as Success<HasHashAndId>).item;
     }
 }
 
 const parseYes = /^(y|yes|true)$/i;
 const parseNo = /^(n|no|false)$/i;
-function parseBoolean(val: string): boolean | string {
+function parseNumber(val: string, key: string): number {
+    let num = Number(val);
+    if (Number.isNaN(num))
+        throw new Error(`Failed to parse field ${key} - "${val}" is not a number`);
+    return num;
+}
+
+function parseBoolean(val: string, key: string): boolean {
+    if (val === "")
+        return undefined;
     if (val.match(parseYes))
         return true
     else if (val.match(parseNo))
         return false;
     else
-        return val;
+        throw new Error(`Failed to parse field ${key} - "${val}" is not a boolean`);
 }
 
-function parseJson(val: string): any {
-    return JSON.parse(val)
+function parseJson(val: string, key: string): any {
+    if (val === "")
+        return undefined;
+    try {
+        return JSON.parse(val)
+    }
+    catch (e) {
+        throw new Error(`Failed to parse field ${key} - "${val}" is not a valid object json`);
+    }
 }
 
-function parseDate(val: string): Date {
-    return new Date(val);
+function parseDate(val: string, key: string): Date {
+    if (val === "")
+        return undefined;
+    let d = new Date(val);
+    if (isNaN(d.getTime()))
+        throw new Error(`Failed to parse field ${key} - "${val}" is not a valid Datetime`);
+    return d;
 }
 
 function parseGallery(val: string) {
+    if (val === "")
+        return undefined;
     try {
         return JSON.parse(val)
     }

@@ -1,7 +1,6 @@
 import {forbidden, ok, serverError} from 'wix-http-functions';
 import wixData from 'wix-data';
 import crypto from 'crypto';
-import PromiseQueue from 'promise-queue';
 import wixSecretsBackend from 'wix-secrets-backend';
 import { mediaManager } from 'wix-media-backend';
 
@@ -14,20 +13,6 @@ import { mediaManager } from 'wix-media-backend';
 // Free site - https://username.wixsite.com/mysite/_functions-dev/example/multiply?leftOperand=3&rightOperand=4
 
 const FORBIDDEN = 'forbidden';
-
-function Queue(concurrency, tasks) {
-  return new Promise(function(resolve, reject) {
-    let q = new PromiseQueue(concurrency, Infinity, {onEmpty: function() {
-        if (q.getPendingLength() === 0)
-          resolve();
-      }});
-
-    if (tasks.length > 0)
-      tasks.forEach(_ => q.add(_));
-    else
-      resolve();
-  })
-}
 
 async function validateAndParseRequest(request) {
   const payload = await request.body.text();

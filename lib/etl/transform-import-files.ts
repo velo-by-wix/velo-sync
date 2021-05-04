@@ -245,6 +245,8 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
     }
 
     private async checkNeedUpload(fileUrl: string): Promise<{shouldUpload: boolean, veloUrl?: string}> {
+        if (fileUrl === "")
+            return {shouldUpload: false, veloUrl: undefined};
         if (isVeloUrl(fileUrl))
             return {shouldUpload: false, veloUrl: fileUrl};
         else if (isStoredOnWixStatics(fileUrl)) {

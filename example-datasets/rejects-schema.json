@@ -4,7 +4,7 @@
     "id": "string",
     "name": "string",
     "number": "number",
-    "date": "Date",
+    "date": "Datetime",
     "boolean": "boolean",
     "picture": "Image",
     "gallery": "Gallery",
