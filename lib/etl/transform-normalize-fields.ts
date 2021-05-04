@@ -1,14 +1,11 @@
 import {Transform} from "./transform";
 import {Next} from "./source";
 import {Statistics} from "../util/statistics";
-import {URL} from 'url';
-import * as path from "path";
 import {Schema} from "../configurations/schema";
 import {HasHash} from "./transform-compute-hash";
 import {camelCase} from 'change-case';
 import {RejectsReporter} from "../util/rejects-reporter";
 import {Failure, Success, tryProcessItem} from "../util/try";
-import {monitorEventLoopDelay} from "perf_hooks";
 import {ItemWithStatus} from "../velo/velo-api";
 export interface HasHashAndId extends HasHash {
     _id: string
@@ -136,7 +133,7 @@ function parseGallery(val: string) {
     }
 }
 
-const imageExtensions = /\.(png|jpg|jpeg|bmp|gif|eps|webp)[\?#]?/i;
+const imageExtensions = /\.(png|jpg|jpeg|bmp|gif|eps|webp)[?#]?/i;
 function isImage(val: string): boolean {
     return !!val.match(imageExtensions);
 }

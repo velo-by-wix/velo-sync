@@ -47,6 +47,7 @@ export class TransformCheckUpdate extends Transform<Array<HasHashAndId>, Array<I
 
         logger.trace(`    check update state batch ${thisBatchNum} with ${batch.length} items. ok: ${ok}, need update: ${needUpdate}, not found: ${notFound}`)
         this.stats.reportProgress('check update state', batch.length);
+        this.stats.reportProgress('up to date items', ok);
         return itemStatuses;
     }
 
