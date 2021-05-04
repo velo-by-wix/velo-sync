@@ -1,6 +1,4 @@
 import chalk from 'chalk';
-import {createWriteStream} from 'fs';
-import PromiseWritable from 'promise-writable';
 import {inspect} from 'util';
 
 const start = new Date().getTime();
