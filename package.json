@@ -7,6 +7,9 @@
   "bin": {
     "sync": "./bin/wix-sync.js"
   },
+  "engines": {
+    "node": ">=0.12.10"
+  },
   "scripts": {
     "build": "tsc",
     "prepublish": "tsc"
