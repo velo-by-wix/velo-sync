@@ -198,4 +198,113 @@ npx: installed 115 in 7.349s
 0:0:3      update: 3
 0:0:3    completed importing Art.csv to Items
 ```
+                
+# Usage as an API
 
+The wix-sync can be used directly as an API. To use it as an API, import the `createDataSync` function 
+from the `npm` package.
+
+```typescript
+import {createDataSync, LoggingStatistics, LoggerRejectsReporter} from 'velo-sync';
+
+async function run() {
+  let data = [...]; // some data to be imported to Velo  
+  let collection = 'items'; // the collection name
+  let config = { // your connection config
+    "siteUrl": "https://domain.com",
+    "secret": "<your secret>"
+  };
+  let schema = { // your data schema
+    "keyField": "ID",
+    "fields": {
+      "Image": "Image",
+      "Artist": "Reference",
+      "Location": "string",
+      "Description": "string",
+      "ID": "string",
+      "Name": "string"
+    }
+  };
+  let stats = new LoggingStatistics(); // statistics reporter
+  let rejectsReporter = new LoggerRejectsReporter(stats); // rejects reporter
+  let filesFolder = './'; // base folder for resolving relative filenames
+  let uploadFilesCacheFile = '.upload-cache.db' // name of the file that stores names and hash of uploaded files
+
+  let dataSync = createDataSync(collection, config, schema, stats, filesFolder, rejectsReporter, uploadFilesCacheFile)
+
+  // add the items to the data sync, and if the internal queues are full, wait for space for the next item
+  for (item of data)
+    await dataSync.handleItem(item);
+  
+  // mark that there are no more items to be imported, to flush all internal buffers
+  dataSync.noMoreItems();
+  
+  // wait for the sync process to complete
+  await dataSync.done();
+}
+```
+                                          
+## Formal types
+
+### createDataSync
+
+```typescript
+export interface Config {
+  siteUrl: string, // url of the home page of the site
+  secret: string // the value of the velo-sync secret as defined in the secret manager
+}
+
+type FieldType =
+        'string'
+        | 'number'
+        | 'boolean'
+        | 'Image'
+        | 'Datetime'
+        | 'Time'
+        | 'RichText'
+        | 'Reference'
+        | 'URL'
+        | 'Document'
+        | 'Video'
+        | 'Audio'
+        | 'Address'
+        | 'Tags'
+        | 'Array'
+        | 'Object'
+        | 'Gallery';
+
+export interface Schema {
+  keyField: string, // the name of the key field in the input objects, to match with _id
+  fields: {
+    [key: string]: FieldType // the fields of the input object and how to transform them to velo types
+  }
+}
+
+export interface Statistics {
+  reportProgress(who: string, items: number) // used by the velo sync to report progress of different stages
+  print(); // used to trigger printing the statistics. for API usage, can be implemented as no op.
+}
+
+export interface RejectsReporter {
+  reject(item: any, error: Error): void; // used to report an item that is invalid for some reason
+}
+
+export interface Next<T> {
+  handleItem: (item: T) => Promise<void> // used to add an item to the sync process
+  noMoreItems: () => void // used to trigger the sync process that no more items are coming
+}
+
+export interface DataSync extends Next<Record<string, any>>{
+  done(): Promise<void>; // used to wait for the sync process to complete
+}
+
+
+export declare function createDataSync(
+    collection: string, // name of the collection to sync with 
+    config: Config, // the config object 
+    schema: Schema, // the schema object  
+    stats: Statistics, // statistics implementation
+    filesFolder: string, // base folder for relative file names 
+    rejectsReporter: RejectsReporter, // rejects reporter 
+    uploadFilesCacheFile: string = '.upload-cache.db'): DataSync
+```

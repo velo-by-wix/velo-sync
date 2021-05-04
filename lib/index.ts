@@ -14,6 +14,9 @@ import {Next} from "./etl/source";
 import {Transform} from "./etl/transform";
 import {RejectsReporter} from "./util/rejects-reporter";
 
+export {LoggingStatistics, Statistics} from './util/statistics';
+export {LoggerRejectsReporter, RejectsReporter} from "./util/rejects-reporter";
+
 export interface DataSync extends Next<Record<string, any>>{
     done(): Promise<void>;
 }
