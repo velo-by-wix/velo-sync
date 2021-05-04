@@ -10,7 +10,7 @@ if (process.argv.length < 3) {
 
 let command = process.argv[2];
 
-if (command === 'initTask') {
+if (command === 'init') {
   initTask();
 }
 else if (command === 'is-alive') {
@@ -65,13 +65,14 @@ else {
 }
 
 function printUsage() {
-  console.log('Usage: ' + optimist.$0 + ' [command] [options...]');
+  console.log('Usage:  ');
+  console.log('  npx velo-sync [command] [options...]');
   console.log('');
   console.log('Commands:');
-  console.log('  initTask          generates a config file for the import / export / sync process');
+  console.log('  init          generates a config file for the import / export / sync process');
+  console.log('  is-alive      tests the config and the connection to the site');
   console.log('  sync          runs the sync process');
   console.log('  import        runs an import process');
-  console.log('  export        runs an export process');
 }
 
 

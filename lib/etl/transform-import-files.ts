@@ -151,7 +151,7 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         rejectedItems.forEach(failure => this.rejectsReporter.reject(failure.item, failure.error))
 
         logger.trace(`    uploaded images for batch ${thisBatchNum} with ${successfullyLoadedItems.length} items. Uploaded Images: ${uploadStats.uploads}, rejected: ${rejectedItems.length}`)
-        this.stats.reportProgress('check update state', successfullyLoadedItems.length);
+        this.stats.reportProgress('items with uploaded items', successfullyLoadedItems.length);
         return successfullyLoadedItems;
     }
 

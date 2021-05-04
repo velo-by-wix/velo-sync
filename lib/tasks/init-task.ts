@@ -10,7 +10,7 @@ export default async function initTask() {
     terminal: true
   });
 
-  console.log(chalk.bgYellow('hello to velo-sync initTask'));
+  console.log(chalk.yellow('hello to velo-sync init'));
 
   let siteUrl = await rlp.questionAsync('what is the url of the site homepage? ')
   let secret = await rlp.questionAsync('what is the velo-sync secret? ')
