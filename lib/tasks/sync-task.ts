@@ -28,7 +28,7 @@ function runImport(filename: string, collection: string, schemaFilename: string,
         let loggerRejectsReporter = new LoggerRejectsReporter(stats);
 
         let dataSync = createDataSync(collection, config, schema, stats, filename, loggerRejectsReporter)
-        let source = new SCVSourceQueue(filename, dataSync, stats);
+        let source = new SCVSourceQueue(filename, dataSync, stats, loggerRejectsReporter);
 
         await source.done();
         await dataSync.done();
