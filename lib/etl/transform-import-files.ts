@@ -12,6 +12,9 @@ import axios from "axios";
 import path from 'path';
 import {camelCase} from 'change-case';
 import * as crypto from 'crypto';
+import {forEach} from "../util/async-foreach";
+import {Failure, Success, TryOp, tryProcessItem} from "../util/try";
+import {RejectsReporter} from "../util/rejects-reporter";
 
 
 interface ProbeImageSizeResult {
@@ -104,50 +107,73 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
     private readonly importFileFolder: string;
     private batchNum: number = 0;
     private readonly fileUploadCache: FileUploadCache;
+    private readonly rejectsReporter: RejectsReporter;
     constructor(config: Config, schema: Schema, importFileFolder: string, collection: string, next: Next<Array<ItemWithStatus>>,
                 fileUploadCache: FileUploadCache,
-                concurrency: number, queueLimit: number, stats: Statistics) {
+                concurrency: number, queueLimit: number, stats: Statistics, rejectsReporter: RejectsReporter) {
         super(next, concurrency, queueLimit, stats);
         this.config = config;
         this.schema = schema;
         this.collection = collection;
         this.importFileFolder = importFileFolder;
         this.fileUploadCache = fileUploadCache;
+        this.rejectsReporter = rejectsReporter;
     }
 
     flush(): Promise<Array<ItemWithStatus>> {
         return Promise.resolve(undefined);
     }
 
-    async process(item: Array<ItemWithStatus>): Promise<Array<ItemWithStatus>> {
-        await this.uploadFiles(item.filter(_ => _.status !== ItemStatus.ok ))
-        return item;
+    async process(batch: Array<ItemWithStatus>): Promise<Array<ItemWithStatus>> {
+        let itemsProcessed = await this.uploadFiles(batch.filter(_ => _.status !== ItemStatus.ok ))
+        return itemsProcessed;
     }
-
-    async uploadFiles(batch: Array<ItemWithStatus>): Promise<void> {
+                  
+    async uploadFiles(batch: Array<ItemWithStatus>): Promise<Array<ItemWithStatus>> {
         let thisBatchNum = this.batchNum++;
         logger.trace(`  upload images for batch ${thisBatchNum} with ${batch.length} items needing image upload`)
 
-        let totalUploadedImages = 0;
-        for (let item of batch) {
-            for (let key of Object.keys(this.schema.fields)) {
-                let fieldType = this.schema.fields[key];
-                let newValue, uploadedImages;
-                if (['Image', 'Gallery', 'Document', 'Video', 'Audio'].find(ft => ft === fieldType) !== undefined) {
-                    if (fieldType === 'Image')
-                        ({newValue, uploadedImages} = await this.importImage(item.item[camelCase(key)], item.item._id, key))
-                    else if (fieldType === 'Video' || fieldType === 'Document' || fieldType === 'Audio')
-                        ({newValue, uploadedImages} = await this.importFile(fieldType.toLowerCase(), item.item[key], item.item._id, key))
-                    else if (fieldType === 'Gallery')
-                        ({newValue, uploadedImages} = await this.importGallery(item.item[key], item.item._id, key))
-                    item.item[camelCase(key)] = newValue;
-                    totalUploadedImages += uploadedImages;
-                }
+        let uploadStats = {uploads: 0};
+        let uploadedItems: Array<TryOp<ItemWithStatus, ItemWithStatus>> = await forEach(batch, item => {
+            return tryProcessItem(item, item => {
+                return this.uploadFilesForItem(item, uploadStats)
+            })
+        })
+
+        let successfullyLoadedItems = uploadedItems
+            .filter(_ => _.isOk())
+            .map(_ => (_ as Success<ItemWithStatus>).item);
+
+        let rejectedItems: Array<Failure<ItemWithStatus>> = uploadedItems
+            .filter(_ => !_.isOk())
+            .map(_ => _ as Failure<ItemWithStatus>)
+
+        rejectedItems.forEach(failure => this.rejectsReporter.reject(failure.item, failure.error))
+
+        logger.trace(`    uploaded images for batch ${thisBatchNum} with ${successfullyLoadedItems.length} items. Uploaded Images: ${uploadStats.uploads}, rejected: ${rejectedItems.length}`)
+        this.stats.reportProgress('check update state', successfullyLoadedItems.length);
+        return successfullyLoadedItems;
+    }
+
+    private async uploadFilesForItem(item: ItemWithStatus, uploadStats: {uploads: number}) {
+        for (let key of Object.keys(this.schema.fields)) {
+            let fieldType = this.schema.fields[key];
+            let newValue, uploadedImages;
+            if (['Image', 'Gallery', 'Document', 'Video', 'Audio'].find(ft => ft === fieldType) !== undefined) {
+                if (fieldType === 'Image')
+                    ({newValue, uploadedImages} = await this.importImage(item.item[camelCase(key)], item.item._id, key))
+                else if (fieldType === 'Video' || fieldType === 'Document' || fieldType === 'Audio')
+                    ({
+                        newValue,
+                        uploadedImages
+                    } = await this.importFile(fieldType.toLowerCase(), item.item[key], item.item._id, key))
+                else if (fieldType === 'Gallery')
+                    ({newValue, uploadedImages} = await this.importGallery(item.item[key], item.item._id, key))
+                item.item[camelCase(key)] = newValue;
+                uploadStats.uploads += uploadedImages;
             }
         }
-
-        logger.trace(`    uploaded images for batch ${thisBatchNum} with ${batch.length} items. Uploaded Images: ${totalUploadedImages}`)
-        this.stats.reportProgress('check update state', batch.length);
+        return item;
     }
 
     private async importImage(imageUrl: string, _id: string, fieldName: string): Promise<UploadResult> {

@@ -1,0 +1,13 @@
+{
+  "keyField": "id",
+  "fields": {
+    "id": "string",
+    "name": "string",
+    "number": "number",
+    "date": "Date",
+    "boolean": "boolean",
+    "picture": "Image",
+    "gallery": "Gallery",
+    "address": "Address"
+  }
+}

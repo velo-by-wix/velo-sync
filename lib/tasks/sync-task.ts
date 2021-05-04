@@ -6,6 +6,7 @@ import {SCVSourceQueue} from "../etl/source-scv";
 import {readSchema} from "../configurations/schema";
 import {removeStaleItems} from "../velo/velo-api";
 import {createDataSync} from "../index";
+import {LoggerRejectsReporter} from "../util/rejects-reporter";
 
 export default async function syncTask(filename: string, collection: string, schemaFilename: string, importOnly: boolean) {
     try {
@@ -24,8 +25,9 @@ function runImport(filename: string, collection: string, schemaFilename: string,
         let stats = new LoggingStatistics();
         let config = await readConfig('config.json');
         let schema = await readSchema(schemaFilename)
+        let loggerRejectsReporter = new LoggerRejectsReporter(stats);
 
-        let dataSync = createDataSync(collection, config, schema, stats, filename)
+        let dataSync = createDataSync(collection, config, schema, stats, filename, loggerRejectsReporter)
         let source = new SCVSourceQueue(filename, dataSync, stats);
 
         await source.done();

@@ -12,6 +12,7 @@ import {HasHashAndId, TransformNormalizeFields} from "./etl/transform-normalize-
 import {TransformComputeHash} from "./etl/transform-compute-hash";
 import {Next} from "./etl/source";
 import {Transform} from "./etl/transform";
+import {RejectsReporter} from "./util/rejects-reporter";
 
 export interface DataSync extends Next<Record<string, any>>{
     done(): Promise<void>;
@@ -40,12 +41,12 @@ class DataSyncImpl implements DataSync {
 }
 
 export function createDataSync(collection: string, config: Config, schema: Schema, stats: Statistics,
-                                     filesFolder: string, uploadFilesCacheFile: string = '.upload-cache.db'): DataSync {
+                                     filesFolder: string, rejectsReporter: RejectsReporter, uploadFilesCacheFile: string = '.upload-cache.db'): DataSync {
     let importFileFolder = path.dirname(filesFolder);
     let fileUploadCache = new PersistentFileUploadCache(uploadFilesCacheFile);
 
     let updateItems = new TransformSave(config, collection, End, 5, 10, stats);
-    let importImages = new TransformImportFiles(config, schema, importFileFolder, collection, updateItems, fileUploadCache, 5, 10, stats);
+    let importImages = new TransformImportFiles(config, schema, importFileFolder, collection, updateItems, fileUploadCache, 5, 10, stats, rejectsReporter);
     let checkUpdate = new TransformCheckUpdate(config, collection, importImages, 5, 10, stats);
     let batch = new TransformBatch<HasHashAndId>(checkUpdate, 10, stats, 50);
     let normalize = new TransformNormalizeFields(batch, 10, stats, schema);

@@ -20,6 +20,8 @@ export class SCVSourceQueue extends Source<Record<string, any>> {
             });
             this.stats.reportProgress('read csv', 1);
         })
+            .on('data-invalid', error => console.error(error))
+            .on('error', error => console.error(error))
             .on('end', () => {
                 this.markAsDone();
             })
