@@ -50,7 +50,7 @@ export function createDataSync(collection: string, config: Config, schema: Schem
     let fileUploadCache = new PersistentFileUploadCache(uploadFilesCacheFile);
 
     let updateItems = new TransformSave(config, collection, End, 5, 10, stats);
-    let importImages = new TransformImportFiles(config, schema, importFileFolder, collection, updateItems, fileUploadCache, 5, 10, stats, rejectsReporter);
+    let importImages = new TransformImportFiles(config, schema, importFileFolder, collection, updateItems, fileUploadCache, 5, 10, stats, rejectsReporter, dryrun);
     let checkUpdate = new TransformCheckUpdate(config, collection, importImages, 5, 10, stats, dryrun);
     let batch = new TransformBatch<HasHashAndId>(checkUpdate, 10, stats, 50);
     let normalize = new TransformNormalizeFields(batch, 10, stats, schema, rejectsReporter);

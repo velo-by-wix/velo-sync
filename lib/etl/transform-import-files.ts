@@ -108,9 +108,10 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
     private batchNum: number = 0;
     private readonly fileUploadCache: FileUploadCache;
     private readonly rejectsReporter: RejectsReporter;
+    private readonly dryrun: boolean;
     constructor(config: Config, schema: Schema, importFileFolder: string, collection: string, next: Next<Array<ItemWithStatus>>,
                 fileUploadCache: FileUploadCache,
-                concurrency: number, queueLimit: number, stats: Statistics, rejectsReporter: RejectsReporter) {
+                concurrency: number, queueLimit: number, stats: Statistics, rejectsReporter: RejectsReporter, dryrun: boolean) {
         super(next, concurrency, queueLimit, stats);
         this.config = config;
         this.schema = schema;
@@ -118,6 +119,7 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         this.importFileFolder = importFileFolder;
         this.fileUploadCache = fileUploadCache;
         this.rejectsReporter = rejectsReporter;
+        this.dryrun = dryrun;
     }
 
     flush(): Promise<Array<ItemWithStatus>> {
@@ -224,7 +226,7 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         let hash = md5(fileContent);
         let veloFileUrl = await this.fileUploadCache.getVeloFileUrl(fileUrlOrPath, hash);
         let uploadedImages = 0;
-        if (!veloFileUrl) {
+        if (!veloFileUrl || !this.dryrun) {
             logger.trace(`    uploading file ${fileUrlOrPath}`)
             let uploadUrl = await getUploadUrl(this.config, mediaType, mimeType, _id, this.collection, fieldName)
             veloFileUrl = await uploadFile(uploadUrl, fileContent, fileName, mediaType, mimeType);
