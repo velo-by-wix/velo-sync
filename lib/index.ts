@@ -49,7 +49,7 @@ export function createDataSync(collection: string, config: Config, schema: Schem
     let importFileFolder = path.dirname(filesFolder);
     let fileUploadCache = new PersistentFileUploadCache(uploadFilesCacheFile);
 
-    let updateItems = new TransformSave(config, collection, End, 5, 10, stats);
+    let updateItems = new TransformSave(config, collection, End, 5, 10, stats, dryrun);
     let importImages = new TransformImportFiles(config, schema, importFileFolder, collection, updateItems, fileUploadCache, 5, 10, stats, rejectsReporter, dryrun);
     let checkUpdate = new TransformCheckUpdate(config, collection, importImages, 5, 10, stats, dryrun);
     let batch = new TransformBatch<HasHashAndId>(checkUpdate, 10, stats, 50);

@@ -10,11 +10,14 @@ export class TransformSave extends Transform<Array<ItemWithStatus>, Array<ItemWi
     private readonly config: Config;
     private readonly collection: string;
     private batchNum: number = 0;
+    private readonly dryrun: boolean;
 
-    constructor(config: Config, collection: string, next: Next<Array<ItemWithStatus>>, concurrency: number, queueLimit: number, stats: Statistics) {
+    constructor(config: Config, collection: string, next: Next<Array<ItemWithStatus>>, concurrency: number, queueLimit: number,
+                stats: Statistics, dryrun: boolean) {
         super(next, concurrency, queueLimit, stats);
         this.config = config;
         this.collection = collection;
+        this.dryrun = dryrun;
     }
 
     flush(): Promise<Array<ItemWithStatus>> {
@@ -35,10 +38,12 @@ export class TransformSave extends Transform<Array<ItemWithStatus>, Array<ItemWi
         }
         else {
             logger.log(`  saving batch ${thisBatchNum} with ${batch.length} items`)
-            let ir = await saveItemBatch(this.config, this.collection, batch);
-            logger.trace(`    saving batch ${thisBatchNum} with ${batch.length} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${JSON.stringify(ir.errors)}`)
+            if (!this.dryrun) {
+                let ir = await saveItemBatch(this.config, this.collection, batch);
+                logger.trace(`    saving batch ${thisBatchNum} with ${batch.length} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${JSON.stringify(ir.errors)}`)
+            }
         }
-        this.stats.reportProgress('update', batch.length);
+        this.stats.reportProgress('items saved', batch.length);
     }
 
 }
