@@ -105,6 +105,7 @@ export async function post_batchCheckUpdateState(request) {
 
     const collection = data.collection;
     const items = data.items;
+    const dryrun = data.dryrun;
 
     let queries = items.map(item => wixData.query(collection).eq('_id', item._id));
 
@@ -125,7 +126,8 @@ export async function post_batchCheckUpdateState(request) {
         result.push({status: 'not-found', _id: item._id});
       }
     });
-    await wixData.bulkUpdate(collection, itemsToUpdate, {suppressAuth: true});
+    if (!dryrun)
+      await wixData.bulkUpdate(collection, itemsToUpdate, {suppressAuth: true});
     return JSON.stringify(result);
   })
 }

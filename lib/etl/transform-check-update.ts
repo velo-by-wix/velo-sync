@@ -11,10 +11,12 @@ export class TransformCheckUpdate extends Transform<Array<HasHashAndId>, Array<I
     private readonly config: Config;
     private readonly collection: string;
     private batchNum: number = 0;
-    constructor(config: Config, collection: string, next: Next<any>, concurrency: number, queueLimit: number, stats: Statistics) {
+    private readonly dryrun: boolean;
+    constructor(config: Config, collection: string, next: Next<any>, concurrency: number, queueLimit: number, stats: Statistics, dryrun: boolean) {
         super(next, concurrency, queueLimit, stats);
         this.config = config;
         this.collection = collection;
+        this.dryrun = dryrun;
     }
 
     flush(): Promise<Array<ItemWithStatus>> {
@@ -31,7 +33,7 @@ export class TransformCheckUpdate extends Transform<Array<HasHashAndId>, Array<I
         let batchHasId = batch.filter(_ => !!_._id);
         let batchNoId = batch.filter(_ => !_._id);
         let itemStatusesHasId = batchHasId.length > 0?
-            await checkUpdateState(this.config, this.collection, batchHasId):
+            await checkUpdateState(this.config, this.collection, batchHasId, this.dryrun):
             [];
         let itemStatusesNoId = batchNoId.map(_ => ({item: _, status: ItemStatus.notFound}))
         let itemStatuses = [...itemStatusesHasId, ...itemStatusesNoId]

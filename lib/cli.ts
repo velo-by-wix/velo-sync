@@ -10,6 +10,30 @@ if (process.argv.length < 3) {
 
 let command = process.argv[2];
 
+function syncOrImportTask(importOnly: boolean) {
+  let argv = optimist
+      .usage(`Usage: $0 ${importOnly?'import':'sync'} -f <scv filename> -c <collection>`)
+      .demand('f')
+      .alias('f', 'filename')
+      .describe('f', 'csv filename to import')
+      .demand('c')
+      .describe('c', 'the name of the collection to import into')
+      .alias('c', 'collection')
+      .demand('s')
+      .describe('s', 'schema file describing the fields of the collection')
+      .alias('s', 'schema')
+      .describe('dry', 'dry-run that does not upload any data or files, and does not remove or update anything on the site')
+      .alias('dry', 'dryrun')
+      .parse(process.argv.slice(3));
+
+  let filename = argv.filename;
+  let collection = argv.collection;
+  let schema = argv.schema;
+  let dryrun = argv.dryrun;
+
+  syncTask(filename, collection, schema, importOnly, dryrun);
+}
+
 if (command === 'init') {
   initTask();
 }
@@ -17,44 +41,10 @@ else if (command === 'is-alive') {
   isAliveTask();
 }
 else if (command === 'sync') {
-  let argv = optimist
-      .usage('Usage: $0 sync -f <scv filename> -c <collection>')
-      .demand(  'f')
-      .alias(   'f', 'filename')
-      .describe('f', 'csv filename to import')
-      .demand(  'c')
-      .describe('c', 'the name of the collection to import into')
-      .alias(   'c', 'collection')
-      .demand(  's')
-      .describe('s', 'schema file describing the fields of the collection')
-      .alias(   's', 'schema')
-      .parse(process.argv.slice(3));
-
-  let filename = argv.filename;
-  let collection = argv.collection;
-  let schema = argv.schema;
-
-  syncTask(filename, collection, schema, false);
+  syncOrImportTask(false);
 }
 else if (command === 'import') {
-  let argv = optimist
-    .usage('Usage: $0 import -f <scv filename> -c <collection>')
-      .demand(  'f')
-      .alias(   'f', 'filename')
-      .describe('f', 'csv filename to import')
-      .demand(  'c')
-      .describe('c', 'the name of the collection to import into')
-      .alias(   'c', 'collection')
-      .demand(  's')
-      .describe('s', 'schema file describing the fields of the collection')
-      .alias(   's', 'schema')
-    .parse(process.argv.slice(3));
-
-  let filename = argv.filename;
-  let collection = argv.collection;
-  let schema = argv.schema;
-
-  syncTask(filename, collection, schema, true);
+  syncOrImportTask(true);
 }
 else if (command === 'export') {
   // runExport();

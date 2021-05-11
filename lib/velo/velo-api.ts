@@ -65,13 +65,13 @@ export interface ApiItemStatusResult {
     status: string
 }
 
-export async function checkUpdateState(config: Config, collection: string, items: Array<HasHashAndId>): Promise<Array<ItemWithStatus>> {
+export async function checkUpdateState(config: Config, collection: string, items: Array<HasHashAndId>, dryrun: boolean): Promise<Array<ItemWithStatus>> {
     let itemsToSend = items.map(_ => {
         let {_id, _hash} = _
         return {_id, _hash};
     })
     let apiResult = await invokeApi(config, 'batchCheckUpdateState', {
-        items: itemsToSend, collection
+        items: itemsToSend, collection, dryrun
     }) as Array<ApiItemStatusResult>;
 
     return apiResult.map(itemStatus => {

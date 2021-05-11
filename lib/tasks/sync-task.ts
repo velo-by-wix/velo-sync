@@ -8,10 +8,10 @@ import {removeStaleItems} from "../velo/velo-api";
 import {createDataSync} from "../index";
 import {LoggerRejectsReporter} from "../util/rejects-reporter";
 
-export default async function syncTask(filename: string, collection: string, schemaFilename: string, importOnly: boolean) {
+export default async function syncTask(filename: string, collection: string, schemaFilename: string, importOnly: boolean, dryrun: boolean) {
     try {
         logger.strongGreen(`starting import ${filename} to ${collection}`);
-        await runImport(filename, collection, schemaFilename, importOnly);
+        await runImport(filename, collection, schemaFilename, importOnly, dryrun);
         logger.strongGreen(`completed importing ${filename} to ${collection}`);
     }
     catch (e) {
@@ -19,7 +19,7 @@ export default async function syncTask(filename: string, collection: string, sch
     }
 }
 
-function runImport(filename: string, collection: string, schemaFilename: string, importOnly: boolean) {
+function runImport(filename: string, collection: string, schemaFilename: string, importOnly: boolean, dryrun: boolean) {
     return new Promise<void>(async resolve => {
 
         let stats = new LoggingStatistics();
@@ -27,7 +27,7 @@ function runImport(filename: string, collection: string, schemaFilename: string,
         let schema = await readSchema(schemaFilename)
         let loggerRejectsReporter = new LoggerRejectsReporter(stats);
 
-        let dataSync = createDataSync(collection, config, schema, stats, filename, loggerRejectsReporter)
+        let dataSync = createDataSync(collection, config, schema, stats, filename, loggerRejectsReporter, dryrun)
         let source = new SCVSourceQueue(filename, dataSync, stats, loggerRejectsReporter);
 
         await source.done();
