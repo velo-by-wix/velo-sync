@@ -25,8 +25,9 @@ export class SCVSourceQueue extends Source<Record<string, any>> {
             this.stats.reportProgress('read csv', 1);
         })
             .on('data-invalid', rejectedItem => {
-                rejectsReporter.reject(rejectedItem, new Error('failed to read item from CSV due to wrong number of comma separated fields'))
                 this.stats.reportProgress('read csv', 1);
+                this.stats.reportProgress('read csv - invalid lines', 1);
+                rejectsReporter.reject(rejectedItem, new Error('failed to read item from CSV due to wrong number of comma separated fields'))
             })
             .on('error', error => logger.error(error))
             .on('end', () => {

@@ -70,6 +70,7 @@ export class TransformNormalizeFields extends Transform<HasHash, HasHashAndId> {
         })
         if (!processedItem.isOk()) {
             let failure = processedItem as Failure<ItemWithStatus>;
+            this.stats.reportProgress('parse CSV fields - field parsing failed', 1);
             this.rejectsReporter.reject(failure.item, failure.error);
         }
         else

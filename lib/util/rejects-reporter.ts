@@ -11,7 +11,7 @@ export class LoggerRejectsReporter implements RejectsReporter {
         this.stats = stats;
     }
     reject(item: any, error: Error): void {
-        this.stats.reportProgress('rejects', 1)
+        this.stats.reportProgress('all rejected items', 1)
         logger.error(`Rejected item: ${error.message}\n ${JSON.stringify(item)}`);
     }
 }

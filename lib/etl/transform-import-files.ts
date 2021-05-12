@@ -153,7 +153,8 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         rejectedItems.forEach(failure => this.rejectsReporter.reject(failure.item, failure.error))
 
         logger.trace(`    uploaded images for batch ${thisBatchNum} with ${successfullyLoadedItems.length} items. Uploaded Images: ${uploadStats.uploads}, rejected: ${rejectedItems.length}`)
-        this.stats.reportProgress('items with uploaded items', successfullyLoadedItems.length);
+        this.stats.reportProgress('upload files - items with successfully loaded files', successfullyLoadedItems.length);
+        this.stats.reportProgress('upload files - items with failure to load files', rejectedItems.length);
         return successfullyLoadedItems;
     }
 
@@ -187,7 +188,7 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         let mimeType = ((await probe.sync(fileContent)) as ProbeImageSizeResult).mime;
         let uploadResult = await this.uploadFile(imageUrl, 'image', mimeType, _id, fieldName, fileContent, parsedUrl.fileName);
 
-        this.stats.reportProgress('upload images', uploadResult.uploadedImages);
+        this.stats.reportProgress('upload files - uploaded images', uploadResult.uploadedImages);
         return uploadResult
     }
 
@@ -199,7 +200,7 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         let {parsedUrl, fileContent} = await this.getFileContent(videoUrl);
         let uploadResult = await this.uploadFile(videoUrl, mediaType, undefined, _id, fieldName, fileContent, parsedUrl.fileName);
 
-        this.stats.reportProgress('upload ' + mediaType, uploadResult.uploadedImages);
+        this.stats.reportProgress('upload files - uploaded ' + mediaType, uploadResult.uploadedImages);
         return uploadResult
     }
 
