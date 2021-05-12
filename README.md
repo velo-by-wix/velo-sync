@@ -179,9 +179,7 @@ The `sync` and `import` commands require the following parameters
 * `-f` - the CSV file to import
 * `-c` - the name of the collection to import data into
 * `-s` - the schema file
-* `--dry` - run in dry-run mode. 
-
-Example run
+* `--dry` - run in dry-run mode.
 
 ### 4. run the sync process
 

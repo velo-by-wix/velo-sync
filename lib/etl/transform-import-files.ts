@@ -153,8 +153,8 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         rejectedItems.forEach(failure => this.rejectsReporter.reject(failure.item, failure.error))
 
         logger.trace(`    uploaded images for batch ${thisBatchNum} with ${successfullyLoadedItems.length} items. Uploaded Images: ${uploadStats.uploads}, rejected: ${rejectedItems.length}`)
-        this.stats.reportProgress('upload files - items with successfully loaded files', successfullyLoadedItems.length);
-        this.stats.reportProgress('upload files - items with failure to load files', rejectedItems.length);
+        this.stats.reportProgress('upload files - items successfully handled for loading files', successfullyLoadedItems.length);
+        this.stats.reportProgress('upload files - items failed handling for loading files', rejectedItems.length);
         return successfullyLoadedItems;
     }
 
@@ -227,7 +227,7 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
         let hash = md5(fileContent);
         let veloFileUrl = await this.fileUploadCache.getVeloFileUrl(fileUrlOrPath, hash);
         let uploadedImages = 0;
-        if (!veloFileUrl || !this.dryrun) {
+        if (!veloFileUrl && !this.dryrun) {
             logger.trace(`    uploading file ${fileUrlOrPath}`)
             let uploadUrl = await getUploadUrl(this.config, mediaType, mimeType, _id, this.collection, fieldName)
             veloFileUrl = await uploadFile(uploadUrl, fileContent, fileName, mediaType, mimeType);
