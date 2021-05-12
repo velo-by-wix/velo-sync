@@ -167,7 +167,23 @@ checking if the API for site https://domain.com is alive...
 API of site https://domain.com is working and alive!!!
 ```
 
-### 3. run the sync process
+### 3. run the sync process in dry run mode
+
+Optional - run the `sync` or `import` commands in dry-run mode.
+In dry-run mode, no data is imported or updated on the velo site, yet the
+sync process reads all the data, all the referenced files and reports any potential issue.
+
+Dry-run will detect any data parsing issues, or any file reference issue.
+
+The `sync` and `import` commands require the following parameters
+* `-f` - the CSV file to import
+* `-c` - the name of the collection to import data into
+* `-s` - the schema file
+* `--dry` - run in dry-run mode. 
+
+Example run
+
+### 4. run the sync process
 
 You can now run the `sync` or `import` commands. 
 `import` will import the data and files, while `sync` will also remove any other old items from the collection.
@@ -305,6 +321,7 @@ export declare function createDataSync(
     schema: Schema, // the schema object  
     stats: Statistics, // statistics implementation
     filesFolder: string, // base folder for relative file names 
-    rejectsReporter: RejectsReporter, // rejects reporter 
+    rejectsReporter: RejectsReporter, // rejects reporter
+    dryrun: boolean, // trigger dry-run
     uploadFilesCacheFile: string = '.upload-cache.db'): DataSync
 ```

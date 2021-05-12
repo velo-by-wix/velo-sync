@@ -32,6 +32,7 @@ const logger = {
   trace: logMaker(chalk.gray),
   strong: logMaker(chalk.whiteBright),
   strongGreen: logMaker(chalk.greenBright),
+  strongYellow: logMaker(chalk.yellowBright),
   formatTime: formatTime,
   dump: dump
 };

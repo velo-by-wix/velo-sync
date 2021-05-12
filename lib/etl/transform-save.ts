@@ -37,11 +37,13 @@ export class TransformSave extends Transform<Array<ItemWithStatus>, Array<ItemWi
             logger.log(`  saving batch ${thisBatchNum} - skipping batch with no items needing save`)
         }
         else {
-            logger.log(`  saving batch ${thisBatchNum} with ${batch.length} items`)
             if (!this.dryrun) {
+                logger.log(`  saving batch ${thisBatchNum} with ${batch.length} items`)
                 let ir = await saveItemBatch(this.config, this.collection, batch);
                 logger.trace(`    saving batch ${thisBatchNum} with ${batch.length} items. inserted: ${ir.inserted}, updated: ${ir.updated}, skipped: ${ir.skipped}, errors: ${JSON.stringify(ir.errors)}`)
             }
+            else
+                logger.log(`  dry-run - skipping batch ${thisBatchNum} save with ${batch.length} items`)
         }
         this.stats.reportProgress('items saved', batch.length);
     }

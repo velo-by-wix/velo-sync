@@ -11,8 +11,12 @@ import {LoggerRejectsReporter} from "../util/rejects-reporter";
 export default async function syncTask(filename: string, collection: string, schemaFilename: string, importOnly: boolean, dryrun: boolean) {
     try {
         logger.strongGreen(`starting import ${filename} to ${collection}`);
+        if (dryrun)
+            logger.strongYellow('-- Running in dry-run mode. No data will be imported or updated on the velo site --')
         await runImport(filename, collection, schemaFilename, importOnly, dryrun);
         logger.strongGreen(`completed importing ${filename} to ${collection}`);
+        if (dryrun)
+            logger.strongYellow('-- Run in dry-run mode. No data was imported or updated on the velo site --')
     }
     catch (e) {
         logger.error(`failed importing ${filename} to ${collection} with ${e}`)
@@ -34,7 +38,7 @@ function runImport(filename: string, collection: string, schemaFilename: string,
         await dataSync.done();
         stats.print();
 
-        if (!importOnly) {
+        if (!importOnly && !dryrun) {
             logger.log(`starting to clear stale items`);
             let pendingItems = 0;
             do {

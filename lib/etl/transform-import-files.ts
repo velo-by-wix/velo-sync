@@ -233,6 +233,10 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
             await this.fileUploadCache.setVeloFileUrl(fileUrlOrPath, hash, veloFileUrl);
             uploadedImages = 1;
         }
+        else if (this.dryrun) {
+            logger.trace(`    dry-run - skipping file upload ${fileUrlOrPath}`)
+            uploadedImages = 1;
+        }
         return {newValue: veloFileUrl, uploadedImages};
     }
 
