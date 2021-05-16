@@ -3,40 +3,46 @@
 ![license MIT](https://img.shields.io/github/license/yoavaa/velo-sync)
 ![build for Velo by Wix](https://img.shields.io/badge/Built%20for-Velo%20by%20Wix-blue)
 
-The `Wix-sync` tool is used to sync data into a Wix Data / Content Manager website. 
-The tool syncs database items and media files (images, videos, audio files or documents)
+/* I found the use of the term "sync" confusing. You usually sync between 2 things to keep them in sync, you don't sync data "into". What's happening here is really an option to import either as append or overwrite your site's data from another source. I would consider renaming the tool to wix-import*/
+
+The `wix-sync` tool imports data into a collection on a Wix site. The tool syncs database items and media files (images, videos, audio files or documents)
 making them available in a wix data collection.
 
-Wix Sync supports a few modes of operations
+`wix-sync` supports the following operations:
 
-| command | data | description |
+| Command | Data | Description |
 |------|------|-----|
-| import | without `keyField` | each data item is a new item in the collection |
-| import | with a `keyField` | consolidates new items with the items in the collection based on the `_id` field |
-| sync | without `keyField` | like import without `keyField`, but also removes all other items from the collection |
-| sync | with a `keyField` | like import with an `keyField`, but also removes all other items from the collection |
+| import | Doesn't include a `keyField` | Each data item is added as a new item in the collection |
+| import | Includes a `keyField` | Existing items with a matching `keyfield` are updated. If no item with a matching `keyfield` exists, a new item is added top the collection |
+| sync | Doesn't include a `keyField` | Similar to import without `keyField`, but removes all other items from the collection |
+| sync | Includes a `keyField` | Similar to import with a `keyField`, but removes all other items from the collection |
 
-The velo-sync application can be used in two different ways
+The `wix-sync` application can be used in two different ways:
 
-* Used as a **CLI Application** to import and sync `CSV` files and referenced media
-* Used as an **API** to import javascript objects and referenced media
+* As a **CLI Application** to import and sync `CSV` files and referenced media
+* As an **API** to import JavaScript objects and referenced media
 
 # Usage as a CLI Application
 
-To use the velo sync CLI Application, you need to prepare your data, prepare your site and prepare the app. 
+To use the `wix-sync` CLI Application, you need to:
+
+* Prepare your data
+* Prepare your site
+* Prepare the app
 
 ## Prepare your Data
 
-### 1. Prepare the CSV File
+### 1. Prepare the CSV file
 
-The data to be imported or synced should be formatted as a standard CSV file, with the following conventions
-* header line with field names.
-* any field that includes a comma (`,`) or new like should be quoted with `"`.
-* field values that include quotes should escape the quotes with double quotes `""`.
+The data to be imported or synced should be formatted as a standard CSV file, that includes the following conventions:
 
-An example CSV file
+* A header line with field names.
+* Any field that includes a comma (`,`) or a new line should be enclosed with quotes (`"`).
+* Any field values that include quotes should escape the quotes with double quotes (`""`).
 
-```
+The following is an example of a CSV file:
+
+``` csv
 Image,Artist,Location,Description,ID,Name
 wix:image://v1/596320_525e18eaa2ce459a94dd3b812a7db930~mv2.jpg/BenWilson_chewing_gum_issa_23.jpg#originWidth=634&originHeight=436,c1c03e11-024b-4dad-a689-1c3610913b9b,London Bridge,,0451962b-9cd2-4fe2-aa24-f7973d073d75,Little Mermaid
 wix:image://v1/fc7570_846eb609b9d640d184345e6309f8768c~mv2.jpg/%20Shop%20till%20you%20drop%20%20%20.JPG#originWidth=1600&originHeight=1067,50072d76-8368-42f7-99ee-0e9296029d75, Bruton Street,"Also known as the “Falling Shopper”, the mural is located on Bruton Lane on the side of a large office building in the heart of the West End district. The piece is over two storeys up and represents a woman falling with a trolley from the top of a building. Banksy’s aim was to point out the dangers of consumerism.  The mural was painted in November 2011 in broad daylight. A scaffolding and a tarpaulin were used to make sure nobody caught the artist red-handed. “Shop Till You Drop” is still visible and quite damaged.",0560c783-f374-44f6-b318-908d6de77816, Shop Till You Drop
@@ -56,12 +62,13 @@ wix:image://v1/596320_44bc2bdb102a48f3ae6e596bb2d2806c~mv2.jpg/tn_IMG_5069.jpg#o
 wix:image://v1/596320_1e8978648f0e4e56b79712f03ff80fa7~mv2.jpg/tn_IMG_0369-001.jpg#originWidth=864&originHeight=837,c1c03e11-024b-4dad-a689-1c3610913b9b,Old Street,,d5e474f2-7faf-47be-9702-27cbab81d0e7,BW Face
 ```
 
-> note: more examples of CSV files can be found in the [example-datasets](./example-datasets) folder.
+> **Note**: More examples of CSV files can be found in the [example-datasets](./example-datasets) folder.
 
-### 2. Prepare the schema File
-                                              
-The schema file describes the fields in the CSV file. It is important for parsing the fields from CSV to the proper types 
-in the collection and to trigger the uploading of files and media into Wix and the collection.
+### 2. Prepare the schema file
+
+The schema file describes the values in the CSV file. It maps the values in the CSV file to the correct field types in your site's collection.
+
+/* I removed the part about it triggering the upload since I don't see that in the functionality. */
 
 An example schema file:
 
@@ -79,57 +86,57 @@ An example schema file:
 }
 ```
 
-The schema file has two main elements
-* keyField - [optional] the name of a column in the CSV file to use as the identifier of the line. This field
-is used to correlate data in the collection with the imported data from the CSV file. In case the collection has an item with 
-an `_id` that equals the `keyField`, the item will be updated. If there is no match, a new item will be added to the collection.  
-* fields - the fields in the CSV file and how to parse / import each field. The fields element is an object, who's property names 
-  (or keys) are column names in the CSV and the values are the collection types.
+The schema file has two main properties:
+
+* keyField - [optional] A value in the CSV file used to identify existing data in the collection. If the collection has an item whose `_id` matches the `keyField` value, the existing item is updated with the new values from the CSV file. If no item with that `_id` exists, a new item is added to the collection.
+
+* fields - The fields in the CSV file that match the fields in your site's collection. The property name is the name of the field in your collection and its value is the field type.
   
-### Supported Types
-               
-|Type  | Valid Values | Example Values |
+#### **Supported Types**
+
+|Type  | Valid Values| Example Values |
 |------|------| --- |
-| `string` | any text <br> texts with commas have to be quoted with "". <br> multiline text supported when quoted | some text <br> "text with comma, has to be quoted" |
-| `number` | any valid javascript number | 1234 <br> 1234.34 <br> 1234.34e12 |
-| `boolean` | true, false <br> yes, no <br> y, n |
-| `Image` | relative file location <br> image url <br> wix image url| ./images/carson-arias-7Z03R1wOdmI-unsplash.jpg <br> https://some-domain.com/image.jpeg <br> `wix:image://v1/e15137_e05ba45c616448a0a0e9d73e726a9168~mv2.jpg/carson-arias-7Z03R1wOdmI-unsplash.jpg#originWidth=2598&originHeight=3247`|
-| `Datetime` | any date time value parsable by `new Date(value)` | 2001-01-01T01:23:45.678Z <br> 2001-01-01 |
+| `string` | Text that includes commas has to be surrounded with quotes (""). Multiline text is supported when surrounded with quotes ("") | Lorem ipsum dolor sit amet <br> "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed" <br> /* Do you have a multi-line example? */ |
+| `number` | Any valid JavaScript number | 1234 <br> 1234.34 <br> 1234.34e12 |
+| `boolean` | - true, false <br> - yes, no <br> - y, n |
+| `Image` | - Relative file location <br> - Image url <br> - Wix image url| ./images/carson-arias-7Z03R1wOdmI-unsplash.jpg <br> https://some-domain.com/image.jpeg <br> `wix:image://v1/e15137_e05ba45c616448a0a0e9d73e726a9168~mv2.jpg/carson-arias-7Z03R1wOdmI-unsplash.jpg#originWidth=2598&originHeight=3247`|
+| `Datetime` | Any date time value parsable by `new Date(value)` | 2001-01-01T01:23:45.678Z <br> 2001-01-01 |
 | `Time` | hours : minutes : seconds | 01:23:45 |
-| `RichText` | HTML string that conforms to wix text element HTML. See [Text Element](https://www.wix.com/velo/reference/$w/text/introduction) | &lt;h1&gt;some text&lt;/h1&gt; |
-| `Reference` | the `_id` of the referenced item | 0065e20a-48ca-4357-a8d6-e1ffa1d091bc |
-| `URL` | Any valid url | https://some-domain.com/directory | 
-| `Document` | relative file location <br> document url | ./document/sample.pdf <br> https://some-domain.com/doc.pdf |
-| `Video` | relative file location <br> document video | ./video/production ID_3755072.mp4 <br> https://some-domain.com/vid.mp4 |
-| `Audio` | relative file location <br> document audio | ./song.mp3 <br> https://some-domain.com/audio.mp3 |
+| `RichText` | An HTML string that conforms to [Wix text element HTML formatting](https://www.wix.com/velo/reference/$w/text/introduction) | &lt;h1&gt;some text&lt;/h1&gt; |
+| `Reference` | The `_id` of the referenced item | 0065e20a-48ca-4357-a8d6-e1ffa1d091bc |
+| `URL` | Any valid URL | https://some-domain.com/directory | 
+| `Document`<sup>*</sup> | - Relative file location <br> - Document URL | ./document/sample.pdf <br> https://some-domain.com/doc.pdf |
+| `Video`<sup>*</sup>| - Relative file location <br> - Video URL | ./video/production ID_3755072.mp4 <br> https://some-domain.com/vid.mp4 |
+| `Audio`<sup>*</sup>| - Relative file location <br> - Audio URL | ./song.mp3 <br> https://some-domain.com/audio.mp3 |
 | `Address` | The Wix address object, as described in the [Address Input value property](https://www.wix.com/velo/reference/$w/addressinput/value)| `{"formatted": "15 Fairmont Pl, Sterling, VA 20165, USA"}` <br>`{"city": "Sterling", "location": { "latitude": 39.0501381, "longitude": -77.426225 }, "streetAddress": { "number": "15", "name": "Fairmont Place", "apt": "" }, "formatted": "15 Fairmont Pl, Sterling, VA 20165, USA", "country": "US", "postalCode": "20165-5769", "subdivision": "VA" }` | 
-| `Tags` | an array of strings | `["one", "two", "three"]` |
-| `Array` | a javascript array | `[1,2,3]` |
-| `Object` | a javascript object | `{a: 1, b: 2}` |
-| `Gallery` | a comma separated list of URLs or files, or a gallery object as described in the [Gallery items property](https://www.wix.com/velo/reference/$w/gallery/items) | ./file1.jpg, ./file2.mp4, http://domain.com/image.png <br> `[{type: 'image', src: './file1.jpg'}, {type: 'video', src: './file2.mp4'}, {type: 'image', src: 'http://domain.com/image.png'}]`|
+| `Tags` | An array of strings | `["one", "two", "three"]` |
+| `Array` | A JavaScript array | `[1,2,3]` |
+| `Object` | A JavaScript object | `{a: 1, b: 2}` |
+| `Gallery` | - A comma separated list of URLs or files <br/> - A gallery object as described in the [Gallery items property](https://www.wix.com/velo/reference/$w/gallery/items) | ./file1.jpg, ./file2.mp4, http://domain.com/image.png <br> `[{type: 'image', src: './file1.jpg'}, {type: 'video', src: './file2.mp4'}, {type: 'image', src: 'http://domain.com/image.png'}]`|
 
-For media and files, the upload process supports 4 different formats of file references
-* relative file location - the file will be uploaded to wix and replaced with a wix url (`wix:image`, etc.). 
+\* For media and files, the upload process supports 4 different formats of file references:
+
+* Relative file location - The file will be uploaded to Wix and replaced with a Wix URL (`wix:image`, etc.).
   The file location is relative to the CSV file. 
-* file url - the file will be uploaded to wix and replaced with a wix url
-* wix statics url - public url of a file already stored on wix - the file will not be uploaded again, and will be replaced with a wix url
-* wix url (`wix:image`, etc.) - the file will not be uploaded as it is already on wix.
+* File URL - The file will be uploaded to Wix and replaced with a Wix URL.
+* Wix statics URL - The public URL of a file already stored on Wix. The file will not be uploaded again and will be replaced with a Wix URL.
+* Wix URL (`wix:image`, etc.) - The file is already on Wix with a Wix URL and will not be uploaded.
 
-## prepare your site
+## Prepare your site
 
-To enable velo sync on a velo site, one need to copy the [http-functions.js](./velo/backend/http-functions.js) into the backend folder in velo.
-Then, a secret should be defined in Secrets Manager (under Settings / Secrets Manager) and define a secret with the name `velo-sync`.
+To enable `wix-sync` on a Wix site:
 
-1. copy the [http-functions.js](./velo/backend/http-functions.js) to the velo backend folder
-2. define a secret `velo-sync` in secret manager, and give it a unique value
-3. publish the site so that the http-functions file will be deployed to the site
+1. Add an `http-functions.js` file to your Backend files.
+2. Copy the contents of [http-functions.js](./velo/backend/http-functions.js) into the `http-function.js` file.
+3. Define a secret named `velo-sync` in the Secret Manager (**Settings > Secrets Manager**), and give it a unique value.
+4. Publish the site so that the `http-functions.js` file will be deployed to the site.
 
-## prepare the application
-             
-Make sure you have node.js installed, of version v12 and above. 
-From the command line, run the application as below - you should see the app usage 
+## Prepare the application
 
-```
+Make sure you have node.js version v12 or above installed.
+From the command line, run the application with the following command. The app usage should be displayed:
+
+```javascript
 ➜ npx velo-sync
 npx: installed 115 in 8.748s
 Usage: 
@@ -141,12 +148,12 @@ Commands:
   sync          runs the sync process
   import        runs an import process
 ```
-                                                                                  
-### 1. init the connection to the velo site
 
-run `npx velo-sync init` and follow the instructions - enter the homepage url of the site and the secret from the secret manager.
+### 1. init the connection to your Wix site
 
-```
+Run `npx velo-sync init` and follow the instructions:
+
+```javascript
 ➜ npx velo-sync init
 npx: installed 115 in 7.133s
 hello to velo-sync init
@@ -154,28 +161,27 @@ what is the url of the site homepage? https://dommain.com
 what is the velo-sync secret? <your secret>
 ```
 
-the init command creates a `config.json` file with the connection to the site 
+The init command creates a `config.json` file with the connection to your site.
 
-### 2. test the connection
+### 2. Test the connection
 
-the `is-alive` command is used to verify the connection to the site, using the `config.json` file generated by the init command. 
+The `is-alive` command is used to verify the connection to your site using the `config.json` file generated by the init command.
 
-```
+```javascript
 ➜ npx velo-sync is-alive
 npx: installed 115 in 7.64s
 checking if the API for site https://domain.com is alive...
 API of site https://domain.com is working and alive!!!
 ```
 
-### 3. run the sync process in dry run mode
+### 3. Run the sync process in Dry Run mode
 
-Optional - run the `sync` or `import` commands in dry-run mode.
-In dry-run mode, no data is imported or updated on the velo site, yet the
-sync process reads all the data, all the referenced files and reports any potential issue.
+You can optionally run the `sync` or `import` commands in dry-run mode. In Dry Run mode, no data is imported or updated on your site. The sync process reads all the data and all the referenced files and reports any potential issues.
 
-Dry-run will detect any data parsing issues, or any file reference issue.
+Dry Run detects any data parsing or file reference issue.
 
-The `sync` and `import` commands require the following parameters
+The `sync` and `import` commands require the following parameters:
+
 * `-f` - the CSV file to import
 * `-c` - the name of the collection to import data into
 * `-s` - the schema file
