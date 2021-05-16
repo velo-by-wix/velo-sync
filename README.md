@@ -1,16 +1,14 @@
-# wix-sync
+# velo-sync
 
 ![license MIT](https://img.shields.io/github/license/yoavaa/velo-sync)
 ![build for Velo by Wix](https://img.shields.io/badge/Built%20for-Velo%20by%20Wix-blue)
 
-/* I found the use of the term "sync" confusing. You usually sync between 2 things to keep them in sync, you don't sync data "into". What's happening here is really an option to import either as append or overwrite your site's data from another source. I would consider renaming the tool to wix-import.
-
 Also, in the npx commands the tool is velo-sync. I think the tool and repo names should match that. */
 
-The `wix-sync` tool imports data into a collection on a Wix site. The tool syncs database items and media files (images, videos, audio files or documents)
+The `velo-sync` tool imports data into a collection on a Wix site. The tool syncs database items and media files (images, videos, audio files or documents)
 making them available in a wix data collection.
 
-`wix-sync` supports the following operations:
+`velo-sync` supports the following operations:
 
 | Command | Data | Description |
 |------|------|-----|
@@ -19,14 +17,14 @@ making them available in a wix data collection.
 | sync | Doesn't include a `keyField` | Similar to import without `keyField`, but removes all other items from the collection |
 | sync | Includes a `keyField` | Similar to import with a `keyField`, but removes all other items from the collection |
 
-The `wix-sync` application can be used in two different ways:
+The `velo-sync` application can be used in two different ways:
 
 * As a **CLI Application** to import and sync `CSV` files and referenced media
 * As an **API** to import JavaScript objects and referenced media
 
 # Usage as a CLI Application
 
-To use the `wix-sync` CLI Application, you need to:
+To use the `velo-sync` CLI Application, you need to:
 
 * Prepare your data
 * Prepare your site
@@ -68,9 +66,8 @@ wix:image://v1/596320_1e8978648f0e4e56b79712f03ff80fa7~mv2.jpg/tn_IMG_0369-001.j
 
 ### 2. Prepare the schema file
 
-The schema file describes the values in the CSV file. It maps the values in the CSV file to the correct field types in your site's collection.
-
-/* I removed the part about it triggering the upload since I don't see that in the functionality. */
+The schema file describes the values in the CSV file. 
+It maps the values in the CSV file to the correct field types in your site's collection.
 
 An example schema file:
 
@@ -126,7 +123,7 @@ The schema file has two main properties:
 
 ## Prepare your site
 
-To enable `wix-sync` on a Wix site:
+To enable `velo-sync` on a Wix site:
 
 1. Add an `http-functions.js` file to your Backend files.
 2. Copy the contents of [http-functions.js](./velo/backend/http-functions.js) into the `http-function.js` file.
@@ -224,7 +221,7 @@ npx: installed 115 in 7.349s
 
 # Usage as an API
 
-`wix-sync` can be used directly as an API. To use it as an API, import the `createDataSync` function from the `npm` package.
+`velo-sync` can be used directly as an API. To use it as an API, import the `createDataSync` function from the `npm` package.
 
 ```typescript
 import {createDataSync, LoggingStatistics, LoggerRejectsReporter} from 'velo-sync';
