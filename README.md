@@ -3,8 +3,6 @@
 ![license MIT](https://img.shields.io/github/license/yoavaa/velo-sync)
 ![build for Velo by Wix](https://img.shields.io/badge/Built%20for-Velo%20by%20Wix-blue)
 
-Also, in the npx commands the tool is velo-sync. I think the tool and repo names should match that. */
-
 The `velo-sync` tool imports data into a collection on a Wix site. The tool syncs database items and media files (images, videos, audio files or documents)
 making them available in a wix data collection.
 
@@ -95,7 +93,7 @@ The schema file has two main properties:
 
 |Type  | Valid Values| Example Values |
 |------|------| --- |
-| `string` | Text that includes commas has to be surrounded with quotes (""). Multiline text is supported when surrounded with quotes ("") | Lorem ipsum dolor sit amet <br> "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed" <br> /* Do you have a multi-line example? */ |
+| `string` | Text that includes commas has to be surrounded with quotes (""). Multiline text is supported when surrounded with quotes ("") | Lorem ipsum dolor sit amet <br> "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed" <br> column 1, column 2,"Lorem ipsum dolor sit amet,<br>consectetur adipiscing elit, sed", column 4, column 5/ |
 | `number` | Any valid JavaScript number | 1234 <br> 1234.34 <br> 1234.34e12 |
 | `boolean` | - true, false <br> - yes, no <br> - y, n |
 | `Image` | - Relative file location <br> - Image url <br> - Wix image url| ./images/carson-arias-7Z03R1wOdmI-unsplash.jpg <br> https://some-domain.com/image.jpeg <br> `wix:image://v1/e15137_e05ba45c616448a0a0e9d73e726a9168~mv2.jpg/carson-arias-7Z03R1wOdmI-unsplash.jpg#originWidth=2598&originHeight=3247`|
