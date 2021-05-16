@@ -3,7 +3,9 @@
 ![license MIT](https://img.shields.io/github/license/yoavaa/velo-sync)
 ![build for Velo by Wix](https://img.shields.io/badge/Built%20for-Velo%20by%20Wix-blue)
 
-/* I found the use of the term "sync" confusing. You usually sync between 2 things to keep them in sync, you don't sync data "into". What's happening here is really an option to import either as append or overwrite your site's data from another source. I would consider renaming the tool to wix-import*/
+/* I found the use of the term "sync" confusing. You usually sync between 2 things to keep them in sync, you don't sync data "into". What's happening here is really an option to import either as append or overwrite your site's data from another source. I would consider renaming the tool to wix-import.
+
+Also, in the npx commands the tool is velo-sync. I think the tool and repo names should match that. */
 
 The `wix-sync` tool imports data into a collection on a Wix site. The tool syncs database items and media files (images, videos, audio files or documents)
 making them available in a wix data collection.
@@ -187,19 +189,20 @@ The `sync` and `import` commands require the following parameters:
 * `-s` - the schema file
 * `--dry` - run in dry-run mode.
 
-### 4. run the sync process
+### 4. Run the sync process
 
 You can now run the `sync` or `import` commands. 
-`import` will import the data and files, while `sync` will also remove any other old items from the collection.
-   
-The `sync` and `import` commands require the following parameters
+`import` will import the data and files, while `sync` will also remove existing items from the collection.
+
+The `sync` and `import` commands require the following parameters:
+
 * `-f` - the CSV file to import
 * `-c` - the name of the collection to import data into
 * `-s` - the schema file
 
-Example run
+Example run:
 
-```
+```javascript
 ➜ npx velo-sync import -f Art.csv -c Items -s Art-schema.json
 npx: installed 115 in 7.349s
 0:0:0    starting import Art.csv to Items
@@ -218,23 +221,22 @@ npx: installed 115 in 7.349s
 0:0:3      update: 3
 0:0:3    completed importing Art.csv to Items
 ```
-                
+
 # Usage as an API
 
-The wix-sync can be used directly as an API. To use it as an API, import the `createDataSync` function 
-from the `npm` package.
+`wix-sync` can be used directly as an API. To use it as an API, import the `createDataSync` function from the `npm` package.
 
 ```typescript
 import {createDataSync, LoggingStatistics, LoggerRejectsReporter} from 'velo-sync';
 
 async function run() {
-  let data = [...]; // some data to be imported to Velo  
-  let collection = 'items'; // the collection name
-  let config = { // your connection config
+  let data = [...]; // The data to import to your site  
+  let collection = 'items'; // The collection name on your site
+  let config = { // Your connection configuration
     "siteUrl": "https://domain.com",
     "secret": "<your secret>"
   };
-  let schema = { // your data schema
+  let schema = { // Your data's schema
     "keyField": "ID",
     "fields": {
       "Image": "Image",
@@ -245,21 +247,21 @@ async function run() {
       "Name": "string"
     }
   };
-  let stats = new LoggingStatistics(); // statistics reporter
-  let rejectsReporter = new LoggerRejectsReporter(stats); // rejects reporter
-  let filesFolder = './'; // base folder for resolving relative filenames
-  let uploadFilesCacheFile = '.upload-cache.db' // name of the file that stores names and hash of uploaded files
+  let stats = new LoggingStatistics(); // Statistics reporter
+  let rejectsReporter = new LoggerRejectsReporter(stats); // Rejects reporter
+  let filesFolder = './'; // Base folder for resolving relative filenames
+  let uploadFilesCacheFile = '.upload-cache.db' // Name of the file that stores the names and hash of uploaded files
 
   let dataSync = createDataSync(collection, config, schema, stats, filesFolder, rejectsReporter, uploadFilesCacheFile)
 
-  // add the items to the data sync, and if the internal queues are full, wait for space for the next item
+  // Add the items to the data sync and if the internal queues are full, wait for space for the next item
   for (item of data)
     await dataSync.handleItem(item);
   
-  // mark that there are no more items to be imported, to flush all internal buffers
+  // Mark that there are no more items to be imported, to flush all internal buffers
   dataSync.noMoreItems();
   
-  // wait for the sync process to complete
+  // Wait for the sync process to complete
   await dataSync.done();
 }
 ```
@@ -270,8 +272,8 @@ async function run() {
 
 ```typescript
 export interface Config {
-  siteUrl: string, // url of the home page of the site
-  secret: string // the value of the velo-sync secret as defined in the secret manager
+  siteUrl: string, // The URL of the Home page of the site
+  secret: string // The value of the velo-sync secret as defined in the Secrets Manager
 }
 
 type FieldType =
@@ -294,38 +296,38 @@ type FieldType =
         | 'Gallery';
 
 export interface Schema {
-  keyField: string, // the name of the key field in the input objects, to match with _id
+  keyField: string, // The name of the key field in the input objects
   fields: {
-    [key: string]: FieldType // the fields of the input object and how to transform them to velo types
+    [key: string]: FieldType // The fields of the input object and their to Velo field types
   }
 }
 
 export interface Statistics {
-  reportProgress(who: string, items: number) // used by the velo sync to report progress of different stages
-  print(); // used to trigger printing the statistics. for API usage, can be implemented as no op.
+  reportProgress(who: string, items: number) // Reports on the progress of different stages
+  print(); // Triggers printing the statistics. When used as an API, can be implemented as no op.
 }
 
 export interface RejectsReporter {
-  reject(item: any, error: Error): void; // used to report an item that is invalid for some reason
+  reject(item: any, error: Error): void; // Reports an item that is invalid
 }
 
 export interface Next<T> {
-  handleItem: (item: T) => Promise<void> // used to add an item to the sync process
-  noMoreItems: () => void // used to trigger the sync process that no more items are coming
+  handleItem: (item: T) => Promise<void> // Adds an item to the sync process
+  noMoreItems: () => void // Notifies the sync process that there are no more items to sync
 }
 
 export interface DataSync extends Next<Record<string, any>>{
-  done(): Promise<void>; // used to wait for the sync process to complete
+  done(): Promise<void>; // Used to wait for the sync process to complete
 }
 
 
 export declare function createDataSync(
-    collection: string, // name of the collection to sync with 
-    config: Config, // the config object 
-    schema: Schema, // the schema object  
-    stats: Statistics, // statistics implementation
-    filesFolder: string, // base folder for relative file names 
-    rejectsReporter: RejectsReporter, // rejects reporter
-    dryrun: boolean, // trigger dry-run
+    collection: string, // The name of the collection to sync with 
+    config: Config, // The config object 
+    schema: Schema, // The schema object  
+    stats: Statistics, // Statistics implementation
+    filesFolder: string, // The base folder for relative file names 
+    rejectsReporter: RejectsReporter, // Rejects reporter
+    dryrun: boolean, // Trigger a Dry Run
     uploadFilesCacheFile: string = '.upload-cache.db'): DataSync
 ```
