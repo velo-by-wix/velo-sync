@@ -44,7 +44,7 @@ class DataSyncImpl implements DataSync {
 }
 
 export function createDataSync(collection: string, config: Config, schema: Schema, stats: Statistics,
-                               filesFolder: string, rejectsReporter: RejectsReporter, dryrun: boolean,
+                               filesFolder: string, rejectsReporter: RejectsReporter, dryrun: boolean = false,
                                uploadFilesCacheFile: string = '.upload-cache.db'): DataSync {
     let importFileFolder = path.dirname(filesFolder);
     let fileUploadCache = new PersistentFileUploadCache(uploadFilesCacheFile);

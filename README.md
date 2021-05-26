@@ -246,8 +246,10 @@ async function run() {
   let rejectsReporter = new LoggerRejectsReporter(stats); // Rejects reporter
   let filesFolder = './'; // Base folder for resolving relative filenames
   let uploadFilesCacheFile = '.upload-cache.db' // Name of the file that stores the names and hash of uploaded files
+  let dryRun = false;
 
-  let dataSync = createDataSync(collection, config, schema, stats, filesFolder, rejectsReporter, uploadFilesCacheFile)
+  let dataSync = createDataSync(collection, config, schema, stats, filesFolder, 
+          rejectsReporter, dryRun, uploadFilesCacheFile)
 
   // Add the items to the data sync and if the internal queues are full, wait for space for the next item
   for (item of data)
@@ -323,6 +325,6 @@ export declare function createDataSync(
     stats: Statistics, // Statistics implementation
     filesFolder: string, // The base folder for relative file names 
     rejectsReporter: RejectsReporter, // Rejects reporter
-    dryrun: boolean, // Trigger a Dry Run
+    dryrun: boolean = false, // Trigger a Dry Run
     uploadFilesCacheFile: string = '.upload-cache.db'): DataSync
 ```

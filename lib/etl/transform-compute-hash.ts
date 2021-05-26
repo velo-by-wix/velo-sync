@@ -1,8 +1,8 @@
 import {Transform} from "./transform";
 import {Next} from "./source";
 import {Statistics} from "../util/statistics";
-import * as crypto from "crypto";
 import {Schema} from "../configurations/schema";
+import hash from 'object-hash';
 
 export interface HasHash extends Record<string, any> {
     _hash: string
@@ -26,13 +26,7 @@ export class TransformComputeHash extends Transform<Record<string, any>, HasHash
     }
 
     hash(item: Record<string, any>): HasHash {
-        let hash = crypto.createHash('md5');
-        Object.keys(this.schema.fields).forEach(key => {
-            let value = item[key];
-            if (value)
-                hash.update(value);
-        });
-        item._hash = hash.digest('hex');
+        item._hash = hash(item);
         return item as object & HasHash;
     }
 }
