@@ -169,9 +169,9 @@ export class TransformImportFiles extends Transform<Array<ItemWithStatus>, Array
                     ({
                         newValue,
                         uploadedImages
-                    } = await this.importFile(fieldType.toLowerCase(), item.item[key], item.item._id, key))
+                    } = await this.importFile(fieldType.toLowerCase(), item.item[camelCase(key)], item.item._id, key))
                 else if (fieldType === 'Gallery')
-                    ({newValue, uploadedImages} = await this.importGallery(item.item[key], item.item._id, key))
+                    ({newValue, uploadedImages} = await this.importGallery(item.item[camelCase(key)], item.item._id, key))
                 item.item[camelCase(key)] = newValue;
                 uploadStats.uploads += uploadedImages;
             }
