@@ -49,16 +49,19 @@ export class TransformNormalizeFields extends Transform<HasHash, HasHashAndId> {
             if (this.schema.keyField)
                 item._id = ''+item[this.schema.keyField];
             Object.keys(this.schema.fields).forEach(key => {
-                switch (this.schema.fields[key]) {
-                    case 'number': item[key] = parseNumber(item[key], key); break;
-                    case 'boolean': item[key] = parseBoolean(item[key], key); break;
-                    case 'Datetime': item[key] = parseDate(item[key], key); break;
-                    case 'Array': item[key] = parseJson(item[key], key); break;
-                    case 'Object': item[key] = parseJson(item[key], key); break;
-                    case 'Address': item[key] = parseJson(item[key], key); break;
-                    case 'Tags': item[key] = parseJson(item[key], key); break;
-                    case 'Gallery': item[key] = parseGallery(item[key]); break;
-                }
+                if (item[key] === undefined || item[key] === null || item[key] === '')
+                    item[key] = undefined;
+                else
+                    switch (this.schema.fields[key]) {
+                        case 'number': item[key] = parseNumber(item[key], key); break;
+                        case 'boolean': item[key] = parseBoolean(item[key], key); break;
+                        case 'Datetime': item[key] = parseDate(item[key], key); break;
+                        case 'Array': item[key] = parseJson(item[key], key); break;
+                        case 'Object': item[key] = parseJson(item[key], key); break;
+                        case 'Address': item[key] = parseJson(item[key], key); break;
+                        case 'Tags': item[key] = parseJson(item[key], key); break;
+                        case 'Gallery': item[key] = parseGallery(item[key]); break;
+                    }
                 let normalizedKey = camelCase(key);
                 if (normalizedKey !== key) {
                     let val = item[key];

@@ -1,6 +1,6 @@
 {
   "name": "velo-sync",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Data sync tool for Wix Data / Content Manager Sites",
   "main": "./dist/index",
   "types": "./dist/index.d.ts",
