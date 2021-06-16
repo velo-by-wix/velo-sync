@@ -67,6 +67,7 @@ function printUsage() {
   console.log('  is-alive      tests the config and the connection to the site');
   console.log('  sync          runs the sync process');
   console.log('  import        runs an import process');
+  console.log('  migrate       migrate existing nedb cache to sqlite cache (.upload-cache.db => .upload-cache.sqlite.db)');
 }
 
 
