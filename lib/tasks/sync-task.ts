@@ -7,6 +7,7 @@ import {readSchema} from "../configurations/schema";
 import {removeStaleItems} from "../velo/velo-api";
 import {createDataSync} from "../index";
 import {LoggerRejectsReporter} from "../util/rejects-reporter";
+import {SQLiteFileUploadCache} from "../state/SQLiteFileUploadCache";
 
 export default async function syncTask(filename: string, collection: string, schemaFilename: string, importOnly: boolean, dryrun: boolean) {
     try {
@@ -30,12 +31,20 @@ function runImport(filename: string, collection: string, schemaFilename: string,
         let config = await readConfig('config.json');
         let schema = await readSchema(schemaFilename)
         let loggerRejectsReporter = new LoggerRejectsReporter(stats);
+        let uploadFileCache = new SQLiteFileUploadCache('./.upload-cache.sqlite.db')
 
-        let dataSync = createDataSync(collection, config, schema, stats, filename, loggerRejectsReporter, dryrun)
-        let source = new SCVSourceQueue(filename, dataSync, stats, loggerRejectsReporter);
+        await uploadFileCache.open();
+        try {
 
-        await source.done();
-        await dataSync.done();
+            let dataSync = createDataSync(collection, config, schema, stats, filename, loggerRejectsReporter, uploadFileCache, dryrun)
+            let source = new SCVSourceQueue(filename, dataSync, stats, loggerRejectsReporter);
+
+            await source.done();
+            await dataSync.done();
+        }
+        finally {
+            await uploadFileCache.close();
+        }
         stats.print();
 
         if (!importOnly && !dryrun) {

@@ -1,8 +1,8 @@
 import {FileUploadCache} from "../etl/transform-import-files";
 import Datastore from 'nedb';
 
-export class PersistentFileUploadCache implements FileUploadCache {
-    private readonly db: any;
+export class NedbFileUploadCache implements FileUploadCache {
+    readonly db: any;
     
     constructor(filename: string) {
         this.db = new Datastore({ filename, autoload: true });
@@ -33,6 +33,14 @@ export class PersistentFileUploadCache implements FileUploadCache {
                     resolve();
             });
         })
+    }
+
+    close(): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    open(): Promise<void> {
+        return Promise.resolve(undefined);
     }
 
 }

@@ -1,6 +1,6 @@
 {
   "name": "velo-sync",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Data sync tool for Wix Data / Content Manager Sites",
   "main": "./dist/index",
   "types": "./dist/index.d.ts",
@@ -24,6 +24,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@types/sqlite3": "^3.1.7",
     "axios": "^0.21.1",
     "chalk": "^2.4.1",
     "change-case": "^4.1.2",
@@ -36,7 +37,8 @@
     "promise-writable": "^3.1.2",
     "readline-promise": "^1.0.5",
     "request": "^2.88.2",
-    "request-promise": "^4.2.6"
+    "request-promise": "^4.2.6",
+    "sqlite3": "^5.0.2"
   },
   "devDependencies": {
     "@types/node": "^14.17.1",

@@ -2,10 +2,10 @@ import {Statistics} from "./util/statistics";
 import {Config} from "./configurations/config";
 import {Schema} from "./configurations/schema";
 import path from "path";
-import {PersistentFileUploadCache} from "./state/PersistentFileUploadCache";
+import {NedbFileUploadCache} from "./state/NedbFileUploadCache";
 import {TransformSave} from "./etl/transform-save";
 import {End} from "./etl/sink-null";
-import {TransformImportFiles} from "./etl/transform-import-files";
+import {FileUploadCache, TransformImportFiles} from "./etl/transform-import-files";
 import {TransformCheckUpdate} from "./etl/transform-check-update";
 import {TransformBatch} from "./etl/transform-batch";
 import {HasHashAndId, TransformNormalizeFields} from "./etl/transform-normalize-fields";
@@ -44,13 +44,12 @@ class DataSyncImpl implements DataSync {
 }
 
 export function createDataSync(collection: string, config: Config, schema: Schema, stats: Statistics,
-                               filesFolder: string, rejectsReporter: RejectsReporter, dryrun: boolean = false,
-                               uploadFilesCacheFile: string = '.upload-cache.db'): DataSync {
+                               filesFolder: string, rejectsReporter: RejectsReporter,
+                               uploadFilesCache: FileUploadCache, dryrun: boolean = false): DataSync {
     let importFileFolder = path.dirname(filesFolder);
-    let fileUploadCache = new PersistentFileUploadCache(uploadFilesCacheFile);
 
     let updateItems = new TransformSave(config, collection, End, 5, 10, stats, dryrun);
-    let importImages = new TransformImportFiles(config, schema, importFileFolder, collection, updateItems, fileUploadCache, 5, 10, stats, rejectsReporter, dryrun);
+    let importImages = new TransformImportFiles(config, schema, importFileFolder, collection, updateItems, uploadFilesCache, 5, 10, stats, rejectsReporter, dryrun);
     let checkUpdate = new TransformCheckUpdate(config, collection, importImages, 5, 10, stats, dryrun);
     let batch = new TransformBatch<HasHashAndId>(checkUpdate, 10, stats, 50);
     let normalize = new TransformNormalizeFields(batch, 10, stats, schema, rejectsReporter);

@@ -65,6 +65,8 @@ async function toVeloUrl(staticUrl: string) {
 }
 
 export interface FileUploadCache {
+    open(): Promise<void>
+    close(): Promise<void>
     setVeloFileUrl(fileUrlOrPath: string, hash: string, veloFileUrl: string): Promise<void>;
     getVeloFileUrl(fileUrlOrPath: string, hash: string): Promise<string>;
 }
@@ -75,6 +77,14 @@ export class NoopFileUploadCache implements FileUploadCache {
     }
 
     setVeloFileUrl(fileUrlOrPath: string, hash: string, veloFileUrl: string): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    close(): Promise<void> {
+        return Promise.resolve(undefined);
+    }
+
+    open(): Promise<void> {
         return Promise.resolve(undefined);
     }
 }

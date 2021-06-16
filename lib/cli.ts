@@ -2,6 +2,7 @@ import optimist from 'optimist';
 import initTask from './tasks/init-task';
 import isAliveTask from "./tasks/is-alive-task";
 import syncTask from "./tasks/sync-task";
+import migrateFileCache from "./tasks/migrate-files-cache-task";
 
 if (process.argv.length < 3) {
   printUsage();
@@ -48,6 +49,9 @@ else if (command === 'import') {
 }
 else if (command === 'export') {
   // runExport();
+}
+else if (command === 'migrate') {
+  migrateFileCache();
 }
 else {
   printUsage();
