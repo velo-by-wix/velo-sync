@@ -254,6 +254,8 @@ async function run() {
   let filesFolder = './'; 
   // implementation of FileUploadCache, based on local sqlite database
   let uploadFileCache = new SQLiteFileUploadCache('./.upload-cache.sqlite.db')
+  // if a local file cache is not needed, we can use the NoopFileUploadCache implementation 
+  //let uploadFileCache = new NoopFileUploadCache();
   // dry run - do not update data on the wix site side
   let dryRun = false;
 

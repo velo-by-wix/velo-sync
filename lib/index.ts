@@ -2,7 +2,6 @@ import {Statistics} from "./util/statistics";
 import {Config} from "./configurations/config";
 import {Schema} from "./configurations/schema";
 import path from "path";
-import {NedbFileUploadCache} from "./state/NedbFileUploadCache";
 import {TransformSave} from "./etl/transform-save";
 import {End} from "./etl/sink-null";
 import {FileUploadCache, TransformImportFiles} from "./etl/transform-import-files";
@@ -16,6 +15,8 @@ import {RejectsReporter} from "./util/rejects-reporter";
 
 export {LoggingStatistics, Statistics} from './util/statistics';
 export {LoggerRejectsReporter, RejectsReporter} from "./util/rejects-reporter";
+export {SQLiteFileUploadCache} from "./state/SQLiteFileUploadCache";
+export {NoopFileUploadCache} from "./etl/transform-import-files"
 
 export interface DataSync extends Next<Record<string, any>>{
     done(): Promise<void>;
