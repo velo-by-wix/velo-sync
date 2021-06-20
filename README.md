@@ -225,13 +225,17 @@ npx: installed 115 in 7.349s
 import {createDataSync, LoggingStatistics, LoggerRejectsReporter} from 'velo-sync';
 
 async function run() {
-  let data = [...]; // The data to import to your site  
-  let collection = 'items'; // The collection name on your site
-  let config = { // Your connection configuration
+  // The data to import to your site
+  let data = [...];
+  // The collection name on your site
+  let collection = 'items'; 
+  // Your connection configuration
+  let config = { 
     "siteUrl": "https://domain.com",
     "secret": "<your secret>"
   };
-  let schema = { // Your data's schema
+  // Your data's schema
+  let schema = { 
     "keyField": "ID",
     "fields": {
       "Image": "Image",
@@ -242,24 +246,37 @@ async function run() {
       "Name": "string"
     }
   };
-  let stats = new LoggingStatistics(); // Statistics reporter
-  let rejectsReporter = new LoggerRejectsReporter(stats); // Rejects reporter
-  let filesFolder = './'; // Base folder for resolving relative filenames
-  let uploadFilesCacheFile = '.upload-cache.db' // Name of the file that stores the names and hash of uploaded files
+  // Statistics reporter
+  let stats = new LoggingStatistics(); 
+  // Rejects reporter
+  let rejectsReporter = new LoggerRejectsReporter(stats); 
+  // Base folder for resolving relative filenames
+  let filesFolder = './'; 
+  // implementation of FileUploadCache, based on local sqlite database
+  let uploadFileCache = new SQLiteFileUploadCache('./.upload-cache.sqlite.db')
+  // dry run - do not update data on the wix site side
   let dryRun = false;
 
-  let dataSync = createDataSync(collection, config, schema, stats, filesFolder, 
-          rejectsReporter, dryRun, uploadFilesCacheFile)
+  // open sqlite cache 
+  await uploadFileCache.open();
+  try {
+    let dataSync = createDataSync(collection, config, schema, stats, filesFolder,
+            rejectsReporter, uploadFileCache, dryRun)
 
-  // Add the items to the data sync and if the internal queues are full, wait for space for the next item
-  for (item of data)
-    await dataSync.handleItem(item);
+    // Add the items to the data sync and if the internal queues are full, wait for space for the next item
+    for (item of data)
+      await dataSync.handleItem(item);
+
+    // Mark that there are no more items to be imported, to flush all internal buffers
+    dataSync.noMoreItems();
   
-  // Mark that there are no more items to be imported, to flush all internal buffers
-  dataSync.noMoreItems();
-  
-  // Wait for the sync process to complete
-  await dataSync.done();
+    // Wait for the sync process to complete
+    await dataSync.done();
+  }
+  finally {
+    // close and flush the sqlite file
+    await uploadFileCache.close();
+  }
 }
 ```
                                           
@@ -317,6 +334,12 @@ export interface DataSync extends Next<Record<string, any>>{
   done(): Promise<void>; // Used to wait for the sync process to complete
 }
 
+export interface FileUploadCache {
+  open(): Promise<void> // called before the cache is used, can be used to read state from a file or another service
+  close(): Promise<void> // called after the cache was used, at the end of the sync process. Can be used to flush state to disk or remote service
+  setVeloFileUrl(fileUrlOrPath: string, hash: string, veloFileUrl: string): Promise<void>; // stores a new mapping of a file url + hash -> velo file url  
+  getVeloFileUrl(fileUrlOrPath: string, hash: string): Promise<string>; // tries to find a velo file url from cache, given a filename and a file hash value
+}
 
 export declare function createDataSync(
     collection: string, // The name of the collection to sync with 
@@ -325,6 +348,6 @@ export declare function createDataSync(
     stats: Statistics, // Statistics implementation
     filesFolder: string, // The base folder for relative file names 
     rejectsReporter: RejectsReporter, // Rejects reporter
-    dryrun: boolean = false, // Trigger a Dry Run
-    uploadFilesCacheFile: string = '.upload-cache.db'): DataSync
+    uploadFilesCache: FileUploadCache, // files upload cache, implemeting FileUploadCache 
+    dryrun: boolean = false, // Trigger a Dry Run): DataSync
 ```
